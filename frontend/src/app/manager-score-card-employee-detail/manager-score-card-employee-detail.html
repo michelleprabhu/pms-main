@@ -1,0 +1,320 @@
+<div class="dashboard-container">
+  <!-- Sidebar -->
+  <aside class="sidebar" [class.collapsed]="isSidebarCollapsed">
+    <div class="sidebar-header">
+      <img *ngIf="!isSidebarCollapsed" src="assets/logo.png" alt="iDUELA" class="logo" />
+      <img *ngIf="isSidebarCollapsed" src="assets/logo.png" alt="iDUELA" class="logo-small" />
+    </div>
+    
+    <nav class="sidebar-nav">
+      <div class="nav-section">
+        <div class="section-title" *ngIf="!isSidebarCollapsed">Home</div>
+        <div class="nav-item" (click)="navigateToDashboard()">
+          <span class="nav-icon"><i class="fas fa-chart-line"></i></span>
+          <span class="nav-text" *ngIf="!isSidebarCollapsed">Dashboard</span>
+        </div>
+        <div class="nav-item active" (click)="navigateToScoreCards()">
+          <span class="nav-icon"><i class="fas fa-clipboard-check"></i></span>
+          <span class="nav-text" *ngIf="!isSidebarCollapsed">Score Cards</span>
+        </div>
+        <div class="nav-item" (click)="navigateToEvaluation()">
+          <span class="nav-icon"><i class="fas fa-star"></i></span>
+          <span class="nav-text" *ngIf="!isSidebarCollapsed">Evaluation</span>
+        </div>
+      </div>
+
+      <div class="nav-spacer"></div>
+      
+      <div class="nav-item sign-out" (click)="signOut()">
+        <span class="nav-icon"><i class="fas fa-sign-out-alt"></i></span>
+        <span class="nav-text" *ngIf="!isSidebarCollapsed">Sign Out</span>
+      </div>
+    </nav>
+  </aside>
+
+  <!-- Main Content -->
+  <div class="main-content">
+    <!-- Top Bar -->
+    <header class="top-bar">
+      <button class="sidebar-toggle" (click)="toggleSidebar()">
+        <i class="fas fa-bars"></i>
+      </button>
+      <div class="page-name">Performance Management System</div>
+      <div class="user-info">
+        <span>Manager</span>
+        <i class="fas fa-user-circle"></i>
+      </div>
+    </header>
+
+    <!-- Page Content -->
+    <div class="page-content">
+      <button class="btn-back" (click)="backToEmployeeList()">
+        <i class="fas fa-arrow-left"></i> Back to Employee List
+      </button>
+
+      <!-- Employee Header -->
+      <div class="employee-header">
+        <h1 class="employee-name">{{ employeeName }}</h1>
+        <p class="employee-meta">{{ employeePosition }} • {{ employeeEmail }}</p>
+      </div>
+
+      <!-- Tabs -->
+      <div class="tabs-container">
+        <div class="tabs-header">
+          <button 
+            class="tab-button" 
+            [class.active]="activeTab === 'profile'"
+            (click)="activeTab = 'profile'">
+            Profile
+          </button>
+          <button 
+            class="tab-button" 
+            [class.active]="activeTab === 'scorecards'"
+            (click)="activeTab = 'scorecards'">
+            Score Cards
+          </button>
+          <button 
+            class="tab-button" 
+            [class.active]="activeTab === 'history'"
+            (click)="activeTab = 'history'">
+            Performance History
+          </button>
+        </div>
+
+        <!-- Tab Content -->
+        <div class="tab-content">
+          <!-- Profile Tab -->
+          <div *ngIf="activeTab === 'profile'" class="tab-panel">
+            <h2 class="tab-title">Employee Profile</h2>
+            <div class="profile-info">
+              <div class="info-row">
+                <span class="info-label">Department:</span>
+                <span class="info-value">{{ employeeDepartment }}</span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">Manager:</span>
+                <span class="info-value">{{ employeeManager }}</span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">Join Date:</span>
+                <span class="info-value">{{ employeeJoinDate }}</span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">Email:</span>
+                <span class="info-value">{{ employeeEmail }}</span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">Position:</span>
+                <span class="info-value">{{ employeePosition }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Score Cards Tab -->
+          <div *ngIf="activeTab === 'scorecards'" class="tab-panel">
+            <div class="tab-header-with-actions">
+              <h2 class="tab-title">Score Cards</h2>
+              <div class="action-buttons">
+                <button class="btn-secondary" (click)="openAddGoalModal()">
+                  <i class="fas fa-plus"></i> Add Goal
+                </button>
+              </div>
+            </div>
+
+            <!-- Weightage Summary Card -->
+            <div class="weightage-summary-card">
+              <h3 class="weightage-title">Performance Weightage Distribution</h3>
+              
+              <div class="weightage-display-row">
+                <span class="weightage-display-label">Goals:</span>
+                <span class="weightage-display-percent">60%</span>
+                <div class="weightage-progress-container">
+                  <div class="weightage-progress-bar goals-bar" style="width: 60%"></div>
+                </div>
+              </div>
+
+              <div class="weightage-display-row">
+                <span class="weightage-display-label">Competencies:</span>
+                <span class="weightage-display-percent">25%</span>
+                <div class="weightage-progress-container">
+                  <div class="weightage-progress-bar competencies-bar" style="width: 25%"></div>
+                </div>
+              </div>
+
+              <div class="weightage-display-row">
+                <span class="weightage-display-label">Values:</span>
+                <span class="weightage-display-percent">15%</span>
+                <div class="weightage-progress-container">
+                  <div class="weightage-progress-bar values-bar" style="width: 15%"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Active Score Card -->
+            <div class="score-card-section">
+              <h3 class="section-subtitle">Active Score Card</h3>
+              <div *ngIf="activeScoreCard" class="score-card">
+                <div class="score-card-header">
+                  <div>
+                    <h4 class="score-card-title">{{ activeScoreCard.reviewPeriod }}</h4>
+                    <p class="score-card-dates">{{ activeScoreCard.startDate }} - {{ activeScoreCard.endDate }}</p>
+                  </div>
+                  <span class="status-badge" [ngClass]="getStatusClass(activeScoreCard.status)">
+                    {{ activeScoreCard.status }}
+                  </span>
+                </div>
+                <div class="score-card-actions">
+                  <button class="btn-view-details-primary" (click)="viewScoreCardDetails(activeScoreCard.id)">
+                    View Details <i class="fas fa-arrow-right"></i>
+                  </button>
+                </div>
+              </div>
+              <div *ngIf="!activeScoreCard" class="no-data">
+                <i class="fas fa-clipboard"></i>
+                <p>No active score card for this review period</p>
+              </div>
+            </div>
+
+            <!-- Past Score Cards -->
+            <div class="score-card-section">
+              <h3 class="section-subtitle">Past Score Cards</h3>
+              <div class="past-score-cards">
+                <div *ngFor="let card of pastScoreCards" class="score-card" (click)="viewScoreCardDetails(card.id)">
+                  <div class="score-card-header">
+                    <div>
+                      <h4 class="score-card-title">{{ card.reviewPeriod }}</h4>
+                      <p class="score-card-dates">{{ card.startDate }} - {{ card.endDate }}</p>
+                    </div>
+                    <span class="status-badge" [ngClass]="getStatusClass(card.status)">
+                      {{ card.status }}
+                    </span>
+                  </div>
+                  <button class="btn-view-details">
+                    View <i class="fas fa-arrow-right"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Performance History Tab -->
+          <div *ngIf="activeTab === 'history'" class="tab-panel">
+            <h2 class="tab-title">Performance History</h2>
+            <div class="history-content">
+              <p class="no-data-text">Performance history data will be displayed here.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Create Score Card Modal -->
+<div class="modal-overlay" *ngIf="showCreateScoreCardModal" (click)="closeCreateScoreCardModal()">
+  <div class="modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>Create New Score Card</h3>
+      <button class="modal-close" (click)="closeCreateScoreCardModal()">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>Review Period</label>
+        <select class="form-control">
+          <option>Q1 2025</option>
+          <option>Q4 2024</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Start Date</label>
+        <input type="date" class="form-control" />
+      </div>
+      <div class="form-group">
+        <label>End Date</label>
+        <input type="date" class="form-control" />
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" (click)="closeCreateScoreCardModal()">Cancel</button>
+      <button class="btn-primary" (click)="createScoreCard()">Create</button>
+    </div>
+  </div>
+</div>
+
+  <!-- Add Goal Modal -->
+  <div class="modal-overlay" *ngIf="showAddGoalModal" (click)="closeAddGoalModal()">
+    <div class="modal-container-responsive" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2 class="modal-title">Add New Goal</h2>
+        <button class="btn-close" (click)="closeAddGoalModal()">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="modal-body">
+        <form class="goal-form">
+          <div class="form-group">
+            <label>Name <span class="required">*</span></label>
+            <input type="text" class="form-control" placeholder="Enter goal name" [(ngModel)]="newGoal.name" name="name" />
+          </div>
+          
+          <div class="form-group">
+            <label>Description <span class="required">*</span></label>
+            <textarea class="form-control" rows="3" placeholder="Enter goal description" [(ngModel)]="newGoal.description" name="description"></textarea>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Status <span class="required">*</span></label>
+              <select class="form-control" [(ngModel)]="newGoal.status" name="status">
+                <option value="">Select Status</option>
+                <option value="Not Started">Not Started</option>
+                <option value="In Progress">In Progress</option>
+                <option value="Completed">Completed</option>
+                <option value="On Hold">On Hold</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Weight of Goal (%) <span class="required">*</span></label>
+              <input type="number" class="form-control" placeholder="0-100" min="0" max="100" [(ngModel)]="newGoal.weight" name="weight" />
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Start Date <span class="required">*</span></label>
+              <input type="date" class="form-control" [(ngModel)]="newGoal.startDate" name="startDate" />
+            </div>
+            <div class="form-group">
+              <label>End Date <span class="required">*</span></label>
+              <input type="date" class="form-control" [(ngModel)]="newGoal.endDate" name="endDate" />
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Deadline Date <span class="required">*</span></label>
+              <input type="date" class="form-control" [(ngModel)]="newGoal.deadlineDate" name="deadlineDate" />
+            </div>
+            <div class="form-group">
+              <label>Updated By <span class="required">*</span></label>
+              <input type="text" class="form-control" placeholder="Enter name" [(ngModel)]="newGoal.updatedBy" name="updatedBy" />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Performance Documents</label>
+            <input type="file" class="form-control-file" (change)="onFileSelect($event)" accept=".pdf,.doc,.docx,.xls,.xlsx" />
+            <small class="form-text">Supported formats: PDF, DOC, DOCX, XLS, XLSX (Max 10MB)</small>
+          </div>
+
+          <div class="form-actions">
+            <button type="button" class="btn btn-secondary" (click)="closeAddGoalModal()">Cancel</button>
+            <button type="button" class="btn btn-success" (click)="addGoal()">Add Goal</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+

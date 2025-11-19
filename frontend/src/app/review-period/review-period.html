@@ -1,0 +1,325 @@
+<div class="page-container">
+  <!-- Sidebar (same as dashboard) -->
+  <aside class="sidebar" [class.collapsed]="isSidebarCollapsed">
+    <div class="sidebar-header">
+      <img *ngIf="!isSidebarCollapsed" src="assets/logo.png" alt="iDUELA" class="logo" />
+      <img *ngIf="isSidebarCollapsed" src="assets/logo.png" alt="iDUELA" class="logo-small" />
+    </div>
+    
+    <nav class="sidebar-nav">
+      <div class="nav-section">
+        <div class="section-title" *ngIf="!isSidebarCollapsed">Home</div>
+        <div class="nav-item" (click)="navigateToDashboard()">
+          <span class="nav-icon"><i class="fas fa-chart-line"></i></span>
+          <span class="nav-text" *ngIf="!isSidebarCollapsed">Dashboard</span>
+        </div>
+        <div class="nav-item" (click)="navigateToPlanning()">
+          <span class="nav-icon"><i class="fas fa-tasks"></i></span>
+          <span class="nav-text" *ngIf="!isSidebarCollapsed">Planning</span>
+        </div>
+        <div class="nav-item" (click)="navigateToScoreCards()">
+          <span class="nav-icon"><i class="fas fa-clipboard-check"></i></span>
+          <span class="nav-text" *ngIf="!isSidebarCollapsed">Score Cards</span>
+        </div>
+        <div class="nav-item" (click)="navigateToEvaluation()">
+          <span class="nav-icon"><i class="fas fa-star"></i></span>
+          <span class="nav-text" *ngIf="!isSidebarCollapsed">Evaluation</span>
+        </div>
+      </div>
+
+      <div class="nav-section">
+        <div class="section-title" *ngIf="!isSidebarCollapsed">Settings</div>
+        <div class="nav-item active">
+          <span class="nav-icon"><i class="fas fa-calendar-alt"></i></span>
+          <span class="nav-text" *ngIf="!isSidebarCollapsed">Review Periods</span>
+        </div>
+      </div>
+      
+      <div class="nav-spacer"></div>
+      
+      <div class="nav-item sign-out" (click)="signOut()">
+        <span class="nav-icon"><i class="fas fa-sign-out-alt"></i></span>
+        <span class="nav-text" *ngIf="!isSidebarCollapsed">Sign Out</span>
+      </div>
+    </nav>
+  </aside>
+
+  <!-- Main Content -->
+  <div class="main-content">
+    <!-- Top Bar -->
+    <header class="top-bar">
+      <button class="sidebar-toggle" (click)="toggleSidebar()">
+        <i class="fas fa-bars"></i>
+      </button>
+      <div class="page-name">Performance Management System</div>
+    </header>
+
+    <!-- Review Periods List View -->
+    <div class="content" *ngIf="!showForm">
+      <div class="page-header">
+        <h1 class="page-title">Review Periods</h1>
+        <button class="btn-add" (click)="showAddForm()">
+          <i class="fas fa-plus"></i> Add
+        </button>
+      </div>
+
+      <!-- Active Periods Section -->
+      <div class="table-section">
+        <h2 class="section-title">Active Periods</h2>
+        <div class="table-container">
+          <table class="periods-table">
+            <thead>
+              <tr>
+                <th>Period Name</th>
+                <th>Period Type</th>
+                <th>Start Date</th>
+                <th>End Date</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              @if (isLoading) {
+                <tr>
+                  <td colspan="6" style="text-align: center; padding: 40px;">
+                    <span>Loading periods...</span>
+                  </td>
+                </tr>
+              } @else if (activePeriods.length === 0) {
+                <tr>
+                  <td colspan="6" style="text-align: center; padding: 40px; color: #999;">
+                    No active periods found
+                  </td>
+                </tr>
+              } @else {
+                @for (period of activePeriods; track period.id) {
+                  <tr>
+                    <td>{{ period.period_name }}</td>
+                    <td>{{ period.period_type }}</td>
+                    <td>{{ formatDate(period.start_date) }}</td>
+                    <td>{{ formatDate(period.end_date) }}</td>
+                    <td><span class="status-text">{{ period.status || 'Active' }}</span></td>
+                    <td>
+                      <button class="btn-icon"><i class="fas fa-edit"></i></button>
+                      <button class="btn-icon"><i class="fas fa-trash"></i></button>
+                    </td>
+                  </tr>
+                }
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Inactive Periods Section -->
+      <div class="table-section">
+        <h2 class="section-title">Inactive Periods</h2>
+        <div class="table-container">
+          <table class="periods-table">
+            <thead>
+              <tr>
+                <th>Period Name</th>
+                <th>Period Type</th>
+                <th>Start Date</th>
+                <th>End Date</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              @if (isLoading) {
+                <tr>
+                  <td colspan="6" style="text-align: center; padding: 40px;">
+                    <span>Loading periods...</span>
+                  </td>
+                </tr>
+              } @else if (inactivePeriods.length === 0) {
+                <tr>
+                  <td colspan="6" style="text-align: center; padding: 40px; color: #999;">
+                    No inactive periods found
+                  </td>
+                </tr>
+              } @else {
+                @for (period of inactivePeriods; track period.id) {
+                  <tr>
+                    <td>{{ period.period_name }}</td>
+                    <td>{{ period.period_type }}</td>
+                    <td>{{ formatDate(period.start_date) }}</td>
+                    <td>{{ formatDate(period.end_date) }}</td>
+                    <td><span class="status-text">{{ period.status || 'Inactive' }}</span></td>
+                    <td>
+                      <button class="btn-icon"><i class="fas fa-eye"></i></button>
+                      <button class="btn-icon"><i class="fas fa-trash"></i></button>
+                    </td>
+                  </tr>
+                }
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Review Period Form (existing form) -->
+    <div class="content" *ngIf="showForm">
+      <div class="form-header">
+        <h1 class="page-title">Add Review Period</h1>
+        <button class="btn-back" (click)="closeForm()">
+          <i class="fas fa-times"></i> Cancel
+        </button>
+      </div>
+      
+      <form [formGroup]="reviewPeriodForm" (ngSubmit)="onSubmit()" class="review-form">
+        <!-- Success Message -->
+        @if (successMessage) {
+          <div class="success-message">{{ successMessage }}</div>
+        }
+
+        <!-- Error Message -->
+        @if (errorMessage) {
+          <div class="error-message">{{ errorMessage }}</div>
+        }
+
+        <!-- Period Name -->
+        <div class="form-group">
+          <label for="periodName">Period Name <span class="required">*</span></label>
+          <input 
+            type="text" 
+            id="periodName" 
+            formControlName="periodName"
+            class="form-control"
+            [class.invalid]="reviewPeriodForm.get('periodName')?.invalid && reviewPeriodForm.get('periodName')?.touched"
+            placeholder="e.g., Q1 2024 Review"
+          />
+          @if (reviewPeriodForm.get('periodName')?.invalid && reviewPeriodForm.get('periodName')?.touched) {
+            <span class="error-text">This field is required</span>
+          }
+        </div>
+
+        <!-- Period Type -->
+        <div class="form-group">
+          <label for="periodType">Period Type <span class="required">*</span></label>
+          <select 
+            id="periodType" 
+            formControlName="periodType"
+            class="form-control"
+            [class.invalid]="reviewPeriodForm.get('periodType')?.invalid && reviewPeriodForm.get('periodType')?.touched"
+          >
+            <option value="">Select Period Type</option>
+            <option value="Q1">Q1</option>
+            <option value="Q2">Q2</option>
+            <option value="Q3">Q3</option>
+            <option value="Q4">Q4</option>
+            <option value="Annual">Annual</option>
+            <option value="Mid-Year">Mid-Year</option>
+          </select>
+          @if (reviewPeriodForm.get('periodType')?.invalid && reviewPeriodForm.get('periodType')?.touched) {
+            <span class="error-text">This field is required</span>
+          }
+        </div>
+
+        <!-- Financial Period -->
+        <div class="form-group">
+          <label for="financialPeriod">Financial Period</label>
+          <input 
+            type="text" 
+            id="financialPeriod" 
+            formControlName="financialPeriod"
+            class="form-control"
+            placeholder="e.g., FY2024"
+          />
+        </div>
+
+        <!-- Description -->
+        <div class="form-group">
+          <label for="description">Description</label>
+          <textarea 
+            id="description" 
+            formControlName="description"
+            class="form-control textarea"
+            rows="5"
+            placeholder="Describe the review period..."
+          ></textarea>
+        </div>
+
+        <!-- Start Date and End Date -->
+        <div class="form-row">
+          <div class="form-group">
+            <label for="startDate">Start Date <span class="required">*</span></label>
+            <div class="date-input">
+              <i class="fas fa-calendar"></i>
+              <input 
+                type="date" 
+                id="startDate" 
+                formControlName="startDate"
+                class="form-control"
+                [class.invalid]="reviewPeriodForm.get('startDate')?.invalid && reviewPeriodForm.get('startDate')?.touched"
+                placeholder="Pick a date"
+              />
+            </div>
+            @if (reviewPeriodForm.get('startDate')?.invalid && reviewPeriodForm.get('startDate')?.touched) {
+              <span class="error-text">This field is required</span>
+            }
+          </div>
+
+          <div class="form-group">
+            <label for="endDate">End Date <span class="required">*</span></label>
+            <div class="date-input">
+              <i class="fas fa-calendar"></i>
+              <input 
+                type="date" 
+                id="endDate" 
+                formControlName="endDate"
+                class="form-control"
+                [class.invalid]="(reviewPeriodForm.get('endDate')?.invalid && reviewPeriodForm.get('endDate')?.touched) || reviewPeriodForm.get('endDate')?.errors?.['endDateInvalid']"
+                placeholder="Pick a date"
+              />
+            </div>
+            @if (reviewPeriodForm.get('endDate')?.invalid && reviewPeriodForm.get('endDate')?.touched) {
+              @if (reviewPeriodForm.get('endDate')?.errors?.['endDateInvalid']) {
+                <span class="error-text">End date must be after start date</span>
+              } @else {
+                <span class="error-text">This field is required</span>
+              }
+            }
+          </div>
+        </div>
+
+        <!-- Status -->
+        <div class="form-group">
+          <label for="status">Status <span class="required">*</span></label>
+          <select 
+            id="status" 
+            formControlName="status"
+            class="form-control"
+            [class.invalid]="reviewPeriodForm.get('status')?.invalid && reviewPeriodForm.get('status')?.touched"
+          >
+            <option value="Draft">Draft</option>
+            <option value="Active">Active</option>
+            <option value="Completed">Completed</option>
+          </select>
+          @if (reviewPeriodForm.get('status')?.invalid && reviewPeriodForm.get('status')?.touched) {
+            <span class="error-text">This field is required</span>
+          }
+        </div>
+
+        <!-- Is Active -->
+        <div class="form-group">
+          <label class="checkbox-label">
+            <input 
+              type="checkbox" 
+              formControlName="isActive"
+              class="checkbox-input"
+            />
+            <span>Is Active</span>
+          </label>
+        </div>
+
+        <!-- Submit Button -->
+        <button type="submit" class="btn-submit" [disabled]="isSubmitting">
+          {{ isSubmitting ? 'Saving...' : 'Save Review Period' }}
+        </button>
+      </form>
+    </div>
+  </div>
+</div>

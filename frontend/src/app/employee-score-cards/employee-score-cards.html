@@ -1,0 +1,114 @@
+<div class="page-container">
+  <!-- Sidebar -->
+  <aside class="sidebar" [class.collapsed]="isSidebarCollapsed">
+    <div class="sidebar-header">
+      <img *ngIf="!isSidebarCollapsed" src="assets/logo.png" alt="iDUELA" class="logo" />
+      <img *ngIf="isSidebarCollapsed" src="assets/logo.png" alt="iDUELA" class="logo-small" />
+    </div>
+    
+    <nav class="sidebar-nav">
+      <div class="nav-section">
+        <div class="section-title" *ngIf="!isSidebarCollapsed">HOME</div>
+        <div class="nav-item" (click)="navigateToDashboard()">
+          <span class="nav-icon"><i class="fas fa-chart-line"></i></span>
+          <span class="nav-text" *ngIf="!isSidebarCollapsed">Dashboard</span>
+        </div>
+        <div class="nav-item" (click)="navigateToSelfEvaluation()">
+          <span class="nav-icon"><i class="fas fa-clipboard-check"></i></span>
+          <span class="nav-text" *ngIf="!isSidebarCollapsed">Self Evaluation</span>
+        </div>
+        <div class="nav-item active" (click)="navigateToMyScoreCard()">
+          <span class="nav-icon"><i class="fas fa-clipboard-list"></i></span>
+          <span class="nav-text" *ngIf="!isSidebarCollapsed">My Score Card</span>
+        </div>
+        <div class="nav-item" (click)="navigateToRatings()">
+          <span class="nav-icon"><i class="fas fa-star"></i></span>
+          <span class="nav-text" *ngIf="!isSidebarCollapsed">Ratings</span>
+        </div>
+      </div>
+      
+      <div class="nav-spacer"></div>
+      
+      <div class="nav-item sign-out" (click)="signOut()">
+        <span class="nav-icon"><i class="fas fa-sign-out-alt"></i></span>
+        <span class="nav-text" *ngIf="!isSidebarCollapsed">Sign Out</span>
+      </div>
+    </nav>
+  </aside>
+
+  <!-- Main Content -->
+  <div class="main-content">
+    <!-- Top Bar -->
+    <header class="top-bar">
+      <button class="sidebar-toggle" (click)="toggleSidebar()">
+        <i class="fas fa-bars"></i>
+      </button>
+      <div class="page-name">Performance Management System</div>
+      <div class="user-info">
+        <span>{{ employeeName }}</span>
+        <i class="fas fa-user-circle"></i>
+      </div>
+    </header>
+
+    <!-- Score Cards Content -->
+    <div class="content">
+      <h1 class="page-title">My Score Card - Select Review Period</h1>
+
+      <!-- Active Review Periods -->
+      <div class="review-periods-section">
+        <h2 class="section-heading">Active Review Periods</h2>
+
+        <div class="periods-grid">
+          <div class="period-card" *ngFor="let period of activeReviewPeriods" (click)="viewScoreCardDetails(period.id)">
+            <div class="period-header">
+              <h3 class="period-name">{{ period.name }}</h3>
+              <span class="status-badge active">{{ period.status }}</span>
+            </div>
+            <div class="period-dates">
+              <i class="fas fa-calendar"></i>
+              <span>{{ period.startDate }} - {{ period.endDate }}</span>
+            </div>
+            <button class="btn-view-scorecards" (click)="viewScoreCardDetails(period.id); $event.stopPropagation()">
+              Start Score Card Planning
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Completed Review Periods -->
+      <div class="review-periods-section">
+        <h2 class="section-heading">Completed Review Periods</h2>
+        <div class="table-container">
+          <table class="periods-table">
+            <thead>
+              <tr>
+                <th>S.No</th>
+                <th>Review Period</th>
+                <th>Start Date</th>
+                <th>End Date</th>
+                <th>Status</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let period of completedReviewPeriods; let i = index" class="clickable-row" (click)="viewScoreCardDetails(period.id)">
+                <td>{{ i + 1 }}</td>
+                <td>{{ period.name }}</td>
+                <td>{{ period.startDate }}</td>
+                <td>{{ period.endDate }}</td>
+                <td>
+                  <span class="status-badge completed">{{ period.status }}</span>
+                </td>
+                <td>
+                  <button class="btn-view" (click)="viewScoreCardDetails(period.id); $event.stopPropagation()">
+                    View <i class="fas fa-arrow-right"></i>
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

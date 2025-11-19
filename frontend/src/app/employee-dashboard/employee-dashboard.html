@@ -1,0 +1,204 @@
+<div class="dashboard-container">
+  <!-- Sidebar -->
+  <aside class="sidebar" [class.collapsed]="isSidebarCollapsed">
+    <div class="sidebar-header">
+      <img *ngIf="!isSidebarCollapsed" src="assets/logo.png" alt="iDUELA" class="logo" />
+      <img *ngIf="isSidebarCollapsed" src="assets/logo.png" alt="iDUELA" class="logo-small" />
+    </div>
+    
+    <nav class="sidebar-nav">
+      <div class="nav-section">
+        <div class="section-title" *ngIf="!isSidebarCollapsed">HOME</div>
+        <div class="nav-item active" (click)="navigateToDashboard()">
+          <span class="nav-icon"><i class="fas fa-chart-line"></i></span>
+          <span class="nav-text" *ngIf="!isSidebarCollapsed">Dashboard</span>
+        </div>
+        <div class="nav-item" (click)="navigateToSelfEvaluation()">
+          <span class="nav-icon"><i class="fas fa-clipboard-check"></i></span>
+          <span class="nav-text" *ngIf="!isSidebarCollapsed">Self Evaluation</span>
+        </div>
+        <div class="nav-item" (click)="navigateToMyScoreCard()">
+          <span class="nav-icon"><i class="fas fa-clipboard-list"></i></span>
+          <span class="nav-text" *ngIf="!isSidebarCollapsed">My Score Card</span>
+        </div>
+        <div class="nav-item" (click)="navigateToRatings()">
+          <span class="nav-icon"><i class="fas fa-star"></i></span>
+          <span class="nav-text" *ngIf="!isSidebarCollapsed">Ratings</span>
+        </div>
+      </div>
+      
+      <div class="nav-spacer"></div>
+      
+      <div class="nav-item sign-out" (click)="signOut()">
+        <span class="nav-icon"><i class="fas fa-sign-out-alt"></i></span>
+        <span class="nav-text" *ngIf="!isSidebarCollapsed">Sign Out</span>
+      </div>
+    </nav>
+  </aside>
+
+  <!-- Main Content -->
+  <div class="main-content">
+    <!-- Top Bar -->
+    <header class="top-bar">
+      <button class="sidebar-toggle" (click)="toggleSidebar()">
+        <i class="fas fa-bars"></i>
+      </button>
+      <div class="page-name">Performance Management System</div>
+      <div class="user-info">
+        <span>{{ employeeName }}</span>
+        <i class="fas fa-user-circle"></i>
+      </div>
+    </header>
+
+    <!-- Dashboard Content -->
+    <div class="dashboard-content">
+      <!-- Metrics Cards -->
+      <div class="metrics-grid">
+        <div class="metric-card">
+          <div class="metric-header">
+            <span class="metric-label">My Active Goals</span>
+            <span class="metric-trend positive">↗ +8.2%</span>
+          </div>
+          <div class="metric-value">7</div>
+          <div class="metric-status">
+            <span class="status-icon">↗</span>
+            <span class="status-text">Strong engagement</span>
+          </div>
+          <div class="metric-description">Goals currently in progress</div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-header">
+            <span class="metric-label">Pending My Action</span>
+            <span class="metric-trend negative">↘ -15%</span>
+          </div>
+          <div class="metric-value">3</div>
+          <div class="metric-status">
+            <span class="status-icon">↘</span>
+            <span class="status-text">Action required</span>
+          </div>
+          <div class="metric-description">Self-evaluations and feedback needed</div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-header">
+            <span class="metric-label">Completed Goals</span>
+            <span class="metric-trend positive">↗ +3.5%</span>
+          </div>
+          <div class="metric-value">12</div>
+          <div class="metric-status">
+            <span class="status-icon">↗</span>
+            <span class="status-text">High achievement</span>
+          </div>
+          <div class="metric-description">Goals successfully completed this year</div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-header">
+            <span class="metric-label">My Performance Rating</span>
+            <span class="metric-trend positive">↗ +6.3%</span>
+          </div>
+          <div class="metric-value">4.2/5.0</div>
+          <div class="metric-status">
+            <span class="status-icon">↗</span>
+            <span class="status-text">Excellent performance</span>
+          </div>
+          <div class="metric-description">Latest evaluation score</div>
+        </div>
+      </div>
+
+      <!-- Chart Section -->
+      <div class="chart-section">
+        <div class="chart-header">
+          <div>
+            <h2 class="chart-title">Performance Trends</h2>
+            <p class="chart-subtitle">Goal completion and employee engagement over time</p>
+          </div>
+          <div class="chart-tabs">
+            <button class="tab-btn active">Last 6 months</button>
+            <button class="tab-btn">Last 30 days</button>
+            <button class="tab-btn">Last 7 days</button>
+          </div>
+        </div>
+        <div class="chart-container">
+          <svg viewBox="0 0 1200 320" class="area-chart">
+            <defs>
+              <!-- Gradients - Maroon and Dark Blue -->
+              <linearGradient id="areaGradient1" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" style="stop-color:#800020;stop-opacity:0.4" />
+                <stop offset="100%" style="stop-color:#800020;stop-opacity:0.05" />
+              </linearGradient>
+              <linearGradient id="areaGradient2" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" style="stop-color:#003366;stop-opacity:0.3" />
+                <stop offset="100%" style="stop-color:#003366;stop-opacity:0.05" />
+              </linearGradient>
+              
+              <!-- Glow effect -->
+              <filter id="glow">
+                <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+                <feMerge>
+                  <feMergeNode in="coloredBlur"/>
+                  <feMergeNode in="SourceGraphic"/>
+                </feMerge>
+              </filter>
+            </defs>
+            
+            <!-- Grid lines -->
+            <line x1="80" y1="50" x2="80" y2="260" stroke="#f0f0f0" stroke-width="1"/>
+            <line x1="80" y1="260" x2="1150" y2="260" stroke="#e5e5e5" stroke-width="2"/>
+            <line x1="80" y1="200" x2="1150" y2="200" stroke="#f5f5f5" stroke-width="1" stroke-dasharray="5,5"/>
+            <line x1="80" y1="140" x2="1150" y2="140" stroke="#f5f5f5" stroke-width="1" stroke-dasharray="5,5"/>
+            <line x1="80" y1="80" x2="1150" y2="80" stroke="#f5f5f5" stroke-width="1" stroke-dasharray="5,5"/>
+            
+            <!-- Area 1 - Maroon with ups and downs -->
+            <path class="chart-path-1" 
+                  d="M 80 200 L 260 170 L 440 190 L 620 130 L 800 150 L 980 100 L 1150 80 L 1150 260 L 80 260 Z" 
+                  fill="url(#areaGradient1)"/>
+            
+            <!-- Line 1 - Maroon -->
+            <path class="chart-line-1"
+                  d="M 80 200 L 260 170 L 440 190 L 620 130 L 800 150 L 980 100 L 1150 80" 
+                  fill="none" stroke="#800020" stroke-width="3" filter="url(#glow)"/>
+            
+            <!-- Area 2 - Dark Blue with ups and downs -->
+            <path class="chart-path-2"
+                  d="M 80 220 L 260 210 L 440 230 L 620 180 L 800 200 L 980 160 L 1150 130 L 1150 260 L 80 260 Z" 
+                  fill="url(#areaGradient2)"/>
+            
+            <!-- Line 2 - Dark Blue -->
+            <path class="chart-line-2"
+                  d="M 80 220 L 260 210 L 440 230 L 620 180 L 800 200 L 980 160 L 1150 130" 
+                  fill="none" stroke="#003366" stroke-width="2.5" filter="url(#glow)"/>
+            
+            <!-- Data points - Maroon -->
+            <circle class="data-point" cx="80" cy="200" r="4" fill="#800020" stroke="#fff" stroke-width="2"/>
+            <circle class="data-point" cx="260" cy="170" r="4" fill="#800020" stroke="#fff" stroke-width="2"/>
+            <circle class="data-point" cx="440" cy="190" r="4" fill="#800020" stroke="#fff" stroke-width="2"/>
+            <circle class="data-point" cx="620" cy="130" r="4" fill="#800020" stroke="#fff" stroke-width="2"/>
+            <circle class="data-point" cx="800" cy="150" r="4" fill="#800020" stroke="#fff" stroke-width="2"/>
+            <circle class="data-point" cx="980" cy="100" r="4" fill="#800020" stroke="#fff" stroke-width="2"/>
+            <circle class="data-point" cx="1150" cy="80" r="5" fill="#800020" stroke="#fff" stroke-width="2"/>
+            
+            <!-- Date labels -->
+            <text x="80" y="285" text-anchor="middle" font-size="12" fill="#999" font-weight="500">Jan</text>
+            <text x="260" y="285" text-anchor="middle" font-size="12" fill="#999" font-weight="500">Feb</text>
+            <text x="440" y="285" text-anchor="middle" font-size="12" fill="#999" font-weight="500">Mar</text>
+            <text x="620" y="285" text-anchor="middle" font-size="12" fill="#999" font-weight="500">Apr</text>
+            <text x="800" y="285" text-anchor="middle" font-size="12" fill="#999" font-weight="500">May</text>
+            <text x="980" y="285" text-anchor="middle" font-size="12" fill="#999" font-weight="500">Jun</text>
+            <text x="1150" y="285" text-anchor="middle" font-size="12" fill="#999" font-weight="500">Jul</text>
+            
+            <!-- Legend -->
+            <g class="legend">
+              <circle cx="900" cy="30" r="5" fill="#800020"/>
+              <text x="910" y="34" font-size="12" fill="#666" font-weight="500">Goal Completion</text>
+              
+              <circle cx="1040" cy="30" r="5" fill="#003366"/>
+              <text x="1050" y="34" font-size="12" fill="#666" font-weight="500">Engagement</text>
+            </g>
+          </svg>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

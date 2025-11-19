@@ -1,0 +1,331 @@
+<div class="page-container">
+  <!-- Sidebar -->
+  <aside class="sidebar" [class.collapsed]="isSidebarCollapsed">
+    <div class="sidebar-header">
+      <img *ngIf="!isSidebarCollapsed" src="assets/logo.png" alt="iDUELA" class="logo" />
+      <img *ngIf="isSidebarCollapsed" src="assets/logo.png" alt="iDUELA" class="logo-small" />
+    </div>
+    
+    <nav class="sidebar-nav">
+      <div class="nav-section">
+        <div class="section-title" *ngIf="!isSidebarCollapsed">Home</div>
+        <div class="nav-item" (click)="navigateToDashboard()">
+          <span class="nav-icon"><i class="fas fa-chart-line"></i></span>
+          <span class="nav-text" *ngIf="!isSidebarCollapsed">Dashboard</span>
+        </div>
+        <div class="nav-item active" (click)="navigateToScoreCards()">
+          <span class="nav-icon"><i class="fas fa-clipboard-check"></i></span>
+          <span class="nav-text" *ngIf="!isSidebarCollapsed">Score Cards</span>
+        </div>
+        <div class="nav-item" (click)="navigateToEvaluation()">
+          <span class="nav-icon"><i class="fas fa-star"></i></span>
+          <span class="nav-text" *ngIf="!isSidebarCollapsed">Evaluation</span>
+        </div>
+      </div>
+      
+      <div class="nav-spacer"></div>
+      
+      <div class="nav-item sign-out" (click)="signOut()">
+        <span class="nav-icon"><i class="fas fa-sign-out-alt"></i></span>
+        <span class="nav-text" *ngIf="!isSidebarCollapsed">Sign Out</span>
+      </div>
+    </nav>
+  </aside>
+
+  <!-- Main Content -->
+  <div class="main-content">
+    <!-- Top Bar -->
+    <header class="top-bar">
+      <button class="sidebar-toggle" (click)="toggleSidebar()">
+        <i class="fas fa-bars"></i>
+      </button>
+      <div class="page-name">Performance Management System</div>
+    </header>
+
+    <!-- Score Card Details Content -->
+    <div class="content">
+      <!-- Back Button -->
+      <button class="btn-back" (click)="navigateToScoreCards()">
+        <i class="fas fa-arrow-left"></i> Back to Score Cards
+      </button>
+
+      <!-- Page Header -->
+      <h1 class="page-title">Score Card Details</h1>
+
+      <!-- Employee Details Card -->
+      <div class="details-card">
+        <div class="detail-item">
+          <span class="detail-label">Employee Name:</span>
+          <span class="detail-value">{{ scoreCard?.employeeName }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Review Period:</span>
+          <span class="detail-value">{{ scoreCard?.reviewPeriod }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Status:</span>
+          <span class="detail-value">{{ scoreCard?.status }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Created On:</span>
+          <span class="detail-value">{{ scoreCard?.createdOn }}</span>
+        </div>
+      </div>
+
+      <!-- Weightage Distribution Card (Compact) -->
+      <div class="weightage-compact-card">
+        <h3 class="weightage-compact-title">Performance Weightage Distribution</h3>
+        
+        <div class="weightage-compact-row">
+          <span class="weightage-compact-label">Goals:</span>
+          <span class="weightage-compact-percent">60%</span>
+          <div class="weightage-compact-bar-container">
+            <div class="weightage-compact-bar" style="width: 60%"></div>
+          </div>
+        </div>
+
+        <div class="weightage-compact-row">
+          <span class="weightage-compact-label">Competencies:</span>
+          <span class="weightage-compact-percent">25%</span>
+          <div class="weightage-compact-bar-container">
+            <div class="weightage-compact-bar" style="width: 25%"></div>
+          </div>
+        </div>
+
+        <div class="weightage-compact-row">
+          <span class="weightage-compact-label">Values:</span>
+          <span class="weightage-compact-percent">15%</span>
+          <div class="weightage-compact-bar-container">
+            <div class="weightage-compact-bar" style="width: 15%"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tabs -->
+      <div class="tabs-container">
+        <div class="tabs-header">
+          <button 
+            class="tab-button" 
+            [class.active]="activeTab === 'goals'"
+            (click)="activeTab = 'goals'">
+            Goals
+          </button>
+          <button 
+            class="tab-button" 
+            [class.active]="activeTab === 'competencies'"
+            (click)="activeTab = 'competencies'">
+            Competencies
+          </button>
+          <button 
+            class="tab-button" 
+            [class.active]="activeTab === 'values'"
+            (click)="activeTab = 'values'">
+            Values
+          </button>
+        </div>
+
+        <!-- Tab Content -->
+        <div class="tabs-content">
+          <!-- Goals Tab -->
+          <div *ngIf="activeTab === 'goals'" class="tab-panel">
+            <div class="tab-title-with-badge">
+              <h2 class="tab-title">Goals</h2>
+              <span class="weightage-badge goals-badge">Goals Weightage: 60%</span>
+            </div>
+            
+            <!-- Planning Progress Card (Manager View) -->
+            <div *ngIf="isPlanningPhase()" class="planning-progress-card">
+              <h3 class="progress-card-title">Planning Progress</h3>
+              <div class="progress-stats">
+                <div class="progress-stat">
+                  <span class="stat-label badge-hr">HR:</span>
+                  <span class="stat-value">{{ getGoalsByRole('HR').length }} goals ({{ getGoalsWeightByRole('HR') }}% weight)</span>
+                </div>
+                <div class="progress-stat">
+                  <span class="stat-label badge-manager">Manager:</span>
+                  <span class="stat-value">{{ getGoalsByRole('Manager').length }} goals ({{ getGoalsWeightByRole('Manager') }}% weight)</span>
+                </div>
+                <div class="progress-stat">
+                  <span class="stat-label badge-employee">Employee:</span>
+                  <span class="stat-value">{{ getGoalsByRole('Employee').length }} goals ({{ getGoalsWeightByRole('Employee') }}% weight)</span>
+                </div>
+                <div class="progress-stat total-weight">
+                  <span class="stat-label"><strong>Total Weight:</strong></span>
+                  <span class="stat-value"><strong>{{ getTotalWeight() }}%</strong></span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Action Buttons (only shown during planning phase) -->
+            <div *ngIf="isPlanningPhase()" class="planning-actions">
+              <button class="btn-secondary" (click)="openAddGoalModal()">
+                <i class="fas fa-plus"></i> Add Goal
+              </button>
+              <button 
+                class="btn-primary" 
+                [disabled]="!canSaveAndNotify()"
+                [title]="canSaveAndNotify() ? '' : 'Total weight must equal 100%'"
+                (click)="saveAndNotify()">
+                <i class="fas fa-bell"></i> Save and Notify
+              </button>
+            </div>
+
+            <div class="data-table-container">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>S.No</th>
+                    <th>Goal</th>
+                    <th>Description</th>
+                    <th>Success Criteria</th>
+                    <th>Status</th>
+                    <th>Weight (%)</th>
+                    <th>Added By</th>
+                    <th>Review Period</th>
+                    <th>Start Date</th>
+                    <th>End Date</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let goal of goals; let i = index" [ngClass]="getGoalRowClass(goal.addedBy)">
+                    <td>{{ i + 1 }}</td>
+                    <td>{{ goal.name }}</td>
+                    <td>{{ goal.description }}</td>
+                    <td class="success-criteria-cell">{{ goal.successCriteria }}</td>
+                    <td>{{ goal.status }}</td>
+                    <td>{{ goal.weight }}</td>
+                    <td>
+                      <span class="role-badge" [ngClass]="getRoleBadgeClass(goal.addedBy)">
+                        {{ goal.addedBy }}
+                      </span>
+                    </td>
+                    <td>{{ goal.reviewPeriod }}</td>
+                    <td>{{ goal.startDate }}</td>
+                    <td>{{ goal.endDate }}</td>
+                    <td class="action-cell">
+                      <!-- Manager's own goals: Edit/Delete -->
+                      <div *ngIf="canEditGoal(goal)" class="action-buttons-inline">
+                        <button class="btn-edit" (click)="editGoal(goal)">
+                          <i class="fas fa-edit"></i> Edit
+                        </button>
+                        <button class="btn-delete" (click)="deleteGoal(goal.id)">
+                          <i class="fas fa-trash"></i> Delete
+                        </button>
+                      </div>
+                      <!-- Employee goals: Accept/Reject -->
+                      <div *ngIf="canAcceptRejectGoal(goal)" class="action-buttons-inline">
+                        <button class="btn-accept" (click)="acceptGoal(goal.id)">
+                          <i class="fas fa-check"></i> Accept
+                        </button>
+                        <button class="btn-reject" (click)="rejectGoal(goal.id)">
+                          <i class="fas fa-times"></i> Reject
+                        </button>
+                      </div>
+                      <!-- HR goals: No action (read-only) -->
+                      <div *ngIf="goal.addedBy === 'HR'" class="action-buttons-inline">
+                        <span class="no-action">View Only</span>
+                      </div>
+                    </td>
+                  </tr>
+                  <tr class="total-row">
+                    <td colspan="5"><strong>Total Weight</strong></td>
+                    <td><strong>{{ getTotalWeight() }}%</strong></td>
+                    <td colspan="5"></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Planning Discussion Section (only shown during planning phase) -->
+            <div *ngIf="isPlanningPhase()" class="planning-discussion">
+              <h3 class="discussion-title">Planning Discussion</h3>
+              <div class="comments-list">
+                <div *ngFor="let comment of planningComments" class="comment-item">
+                  <div class="comment-header">
+                    <span class="comment-badge" [ngClass]="getRoleBadgeClass(comment.role)">
+                      {{ comment.role }}
+                    </span>
+                    <span class="comment-timestamp">{{ comment.timestamp | date:'short' }}</span>
+                  </div>
+                  <div class="comment-text">{{ comment.text }}</div>
+                </div>
+                <div *ngIf="planningComments.length === 0" class="no-comments">
+                  <i class="fas fa-comments"></i>
+                  <p>No comments yet. Start a discussion about this score card.</p>
+                </div>
+              </div>
+              <div class="add-comment-section">
+                <textarea 
+                  [(ngModel)]="newComment" 
+                  class="comment-input" 
+                  placeholder="Add a comment to the discussion...">
+                </textarea>
+                <button class="btn-primary" (click)="addComment()">
+                  <i class="fas fa-comment"></i> Add Comment
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Competencies Tab -->
+          <div *ngIf="activeTab === 'competencies'" class="tab-panel">
+            <div class="tab-title-with-badge">
+              <h2 class="tab-title">Competencies</h2>
+              <span class="weightage-badge competencies-badge">Competencies Weightage: 25%</span>
+            </div>
+            <div class="data-table-container">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>S.No</th>
+                    <th>Competency</th>
+                    <th>Description</th>
+                    <th>Min Proficiency Level</th>
+                    <th>Max Proficiency Level</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let competency of competencies; let i = index">
+                    <td>{{ i + 1 }}</td>
+                    <td>{{ competency.name }}</td>
+                    <td>{{ competency.description }}</td>
+                    <td>{{ competency.minLevel }}</td>
+                    <td>{{ competency.maxLevel }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Values Tab -->
+          <div *ngIf="activeTab === 'values'" class="tab-panel">
+            <div class="tab-title-with-badge">
+              <h2 class="tab-title">Values</h2>
+              <span class="weightage-badge values-badge">Values Weightage: 15%</span>
+            </div>
+            <div class="data-table-container">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>S.No</th>
+                    <th>Value</th>
+                    <th>Description</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let value of values; let i = index">
+                    <td>{{ i + 1 }}</td>
+                    <td>{{ value.name }}</td>
+                    <td>{{ value.description }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+

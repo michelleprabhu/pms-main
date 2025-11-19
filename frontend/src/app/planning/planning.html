@@ -1,0 +1,280 @@
+<div class="dashboard-container">
+  <!-- Sidebar -->
+  <aside class="sidebar" [class.collapsed]="isSidebarCollapsed">
+    <div class="sidebar-header">
+      <img *ngIf="!isSidebarCollapsed" src="assets/logo.png" alt="iDUELA" class="logo" />
+      <img *ngIf="isSidebarCollapsed" src="assets/logo.png" alt="iDUELA" class="logo-small" />
+    </div>
+    
+    <nav class="sidebar-nav">
+      <div class="nav-section">
+        <div class="section-title" *ngIf="!isSidebarCollapsed">Home</div>
+        <div class="nav-item" (click)="navigateToDashboard()">
+          <span class="nav-icon"><i class="fas fa-chart-line"></i></span>
+          <span class="nav-text" *ngIf="!isSidebarCollapsed">Dashboard</span>
+        </div>
+        <div class="nav-item active" (click)="navigateToPlanning()">
+          <span class="nav-icon"><i class="fas fa-tasks"></i></span>
+          <span class="nav-text" *ngIf="!isSidebarCollapsed">Planning</span>
+        </div>
+        <div class="nav-item" (click)="navigateToScoreCards()">
+          <span class="nav-icon"><i class="fas fa-clipboard-check"></i></span>
+          <span class="nav-text" *ngIf="!isSidebarCollapsed">Score Cards</span>
+        </div>
+        <div class="nav-item" (click)="navigateToEvaluation()">
+          <span class="nav-icon"><i class="fas fa-star"></i></span>
+          <span class="nav-text" *ngIf="!isSidebarCollapsed">Evaluation</span>
+        </div>
+      </div>
+
+      <div class="nav-section">
+        <div class="section-title" *ngIf="!isSidebarCollapsed">Settings</div>
+        <div class="nav-item" (click)="navigateToReviewPeriods()">
+          <span class="nav-icon"><i class="fas fa-calendar-alt"></i></span>
+          <span class="nav-text" *ngIf="!isSidebarCollapsed">Review Periods</span>
+        </div>
+      </div>
+      
+      <div class="nav-spacer"></div>
+      
+      <div class="nav-item sign-out" (click)="signOut()">
+        <span class="nav-icon"><i class="fas fa-sign-out-alt"></i></span>
+        <span class="nav-text" *ngIf="!isSidebarCollapsed">Sign Out</span>
+      </div>
+    </nav>
+  </aside>
+
+  <!-- Main Content -->
+  <div class="main-content">
+    <!-- Top Bar -->
+    <header class="top-bar">
+      <button class="sidebar-toggle" (click)="toggleSidebar()">
+        <i class="fas fa-bars"></i>
+      </button>
+      <div class="page-name">Performance Management System</div>
+      <div class="user-info">
+        <span>HR Admin</span>
+        <i class="fas fa-user-circle"></i>
+      </div>
+    </header>
+
+    <!-- Page Content -->
+    <div class="page-content">
+      <h1 class="page-title">Goal Planning - Select Review Period</h1>
+
+      <!-- Active Review Periods -->
+      <div class="review-periods-section">
+        <h2 class="section-heading">Active Review Periods</h2>
+        
+        <!-- Info Note -->
+        <div class="info-note">
+          <i class="fas fa-info-circle"></i>
+          <span>Note: Clicking "Start Planning" will automatically generate blank score cards for all employees matching the selected eligibility criteria.</span>
+        </div>
+
+        <div class="periods-grid">
+          <div class="period-card" *ngFor="let period of activeReviewPeriods">
+            <div class="period-header">
+              <h3 class="period-name">{{ period.name }}</h3>
+              <span class="status-badge active">{{ period.status }}</span>
+            </div>
+            <div class="period-dates">
+              <i class="fas fa-calendar"></i>
+              <span>{{ period.startDate }} - {{ period.endDate }}</span>
+            </div>
+            <div class="period-stats">
+              <div class="stat-item">
+                <i class="fas fa-users planning-icon"></i>
+                <span class="planning-stat-text">{{ period.employeeCount }} Employees</span>
+              </div>
+            </div>
+            <button class="btn-start-planning" (click)="openStartPlanningModal(period)">
+              Start Planning
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Completed Review Periods -->
+      <div class="review-periods-section">
+        <h2 class="section-heading">Completed Review Periods</h2>
+        <div class="table-container">
+          <table class="periods-table">
+            <thead>
+              <tr>
+                <th>S.No</th>
+                <th>Review Period</th>
+                <th>Start Date</th>
+                <th>End Date</th>
+                <th>Employees</th>
+                <th>Status</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let period of completedReviewPeriods; let i = index" class="clickable-row" (click)="viewPlanningEmployees(period.id)">
+                <td>{{ i + 1 }}</td>
+                <td class="period-name">{{ period.name }}</td>
+                <td>{{ period.startDate }}</td>
+                <td>{{ period.endDate }}</td>
+                <td>{{ period.employeeCount }}</td>
+                <td><span class="status-badge completed">{{ period.status }}</span></td>
+                <td>
+                  <button class="btn-view-small" (click)="viewPlanningEmployees(period.id); $event.stopPropagation()">
+                    <i class="fas fa-eye"></i> View
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Start Planning Modal -->
+  <div class="modal-overlay" *ngIf="showStartPlanningModal" (click)="closeStartPlanningModal()">
+    <div class="modal-container" (click)="$event.stopPropagation()">
+      <!-- Modal Header -->
+      <div class="modal-header">
+        <div>
+          <h2 class="modal-title">Start Planning - {{ selectedPeriod?.name }}</h2>
+          <p class="modal-subtitle">Select eligibility profiles to generate score cards</p>
+        </div>
+        <button class="btn-close" (click)="closeStartPlanningModal()">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+
+      <!-- Modal Content -->
+      <div class="modal-content">
+        <!-- Section 1: Eligibility Profile Selection -->
+        <div class="modal-section">
+          <h3 class="section-heading">Available Eligibility Profiles</h3>
+          
+          <div class="table-wrapper">
+            <table class="profiles-table">
+              <thead>
+                <tr>
+                  <th class="checkbox-column">Select</th>
+                  <th>Profile Name</th>
+                  <th>Description</th>
+                  <th>Department</th>
+                  <th>Position Criteria</th>
+                  <th>Matching Employees</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let profile of eligibilityProfiles" 
+                    [class.selected]="profile.selected"
+                    (click)="toggleProfileSelection(profile)">
+                  <td class="checkbox-cell">
+                    <div class="custom-checkbox">
+                      <i class="fas fa-check" *ngIf="profile.selected"></i>
+                    </div>
+                  </td>
+                  <td>{{ profile.name }}</td>
+                  <td>{{ profile.description }}</td>
+                  <td>{{ profile.department }}</td>
+                  <td>{{ profile.positionCriteria }}</td>
+                  <td><strong>{{ profile.matchingEmployees }}</strong></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Section 2: Selection Summary -->
+        <div class="modal-section">
+          <div class="selection-summary">
+            <h3 class="summary-title">Selection Summary</h3>
+            <div class="summary-item">
+              <span>Selected Profiles:</span>
+              <strong>{{ getSelectedProfilesCount() }}</strong>
+            </div>
+            <div class="summary-item">
+              <span>Total Employees:</span>
+              <strong>{{ getTotalEmployees() }} employees</strong>
+            </div>
+            <div class="summary-item">
+              <span>Score Cards to Generate:</span>
+              <strong>{{ getTotalEmployees() }}</strong>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="modal-footer">
+        <button class="btn-cancel" (click)="closeStartPlanningModal()">Cancel</button>
+        <button class="btn-generate" 
+                [disabled]="getSelectedProfilesCount() === 0" 
+                [class.loading]="isGenerating"
+                (click)="generateScoreCards()">
+          <span *ngIf="!isGenerating">Generate Score Cards</span>
+          <span *ngIf="isGenerating">
+            <i class="fas fa-spinner fa-spin"></i> Generating...
+          </span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Generated Employees Modal -->
+  <div class="modal-overlay" *ngIf="showGeneratedEmployees" (click)="closeGeneratedEmployees()">
+    <div class="modal-container-large" (click)="$event.stopPropagation()">
+      <!-- Modal Header -->
+      <div class="modal-header">
+        <div>
+          <h2 class="modal-title">Score Cards Generated Successfully</h2>
+          <p class="modal-subtitle">{{ generatedEmployees.length }} blank score cards have been created</p>
+        </div>
+        <button class="btn-close" (click)="closeGeneratedEmployees()">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+
+      <!-- Modal Content -->
+      <div class="modal-content">
+        <div class="generated-employees-table">
+          <table class="profiles-table">
+            <thead>
+              <tr>
+                <th>S.No</th>
+                <th>Employee Name</th>
+                <th>Department</th>
+                <th>Position</th>
+                <th>Goals</th>
+                <th>Competencies</th>
+                <th>Values</th>
+                <th>Score Card Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let employee of generatedEmployees; let i = index">
+                <td>{{ i + 1 }}</td>
+                <td>{{ employee.name }}</td>
+                <td>{{ employee.department }}</td>
+                <td>{{ employee.position }}</td>
+                <td class="percentage-cell">0%</td>
+                <td class="percentage-cell">0%</td>
+                <td class="percentage-cell">0%</td>
+                <td>
+                  <span class="status-badge status-plan-not-started">Plan Not Started</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="modal-footer">
+        <button class="btn-generate" (click)="startScoreCardProcess()">
+          Start Score Card Process <i class="fas fa-arrow-right"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
