@@ -92,7 +92,7 @@
             <tbody>
               <tr *ngFor="let employee of filteredEmployees; let i = index" 
                   class="clickable-row" 
-                  (click)="viewScoreCardDetail(employee.id)">
+                  (click)="viewScoreCardDetail(employee.scoreCardId)">
                 <td>{{ i + 1 }}</td>
                 <td>{{ employee.name }}</td>
                 <td>{{ employee.department }}</td>
@@ -103,9 +103,16 @@
                   </span>
                 </td>
                 <td (click)="$event.stopPropagation()">
-                  <button class="btn-view-small" (click)="viewScoreCardDetail(employee.id)">
+                  <button class="btn-view-small" (click)="viewScoreCardDetail(employee.scoreCardId)">
                     View
                   </button>
+                </td>
+              </tr>
+              <tr *ngIf="filteredEmployees.length === 0">
+                <td colspan="6" style="text-align: center; padding: 40px;">
+                  <p>No employees found for this review period.</p>
+                  <p style="color: #666; font-size: 14px;">Score cards may not have been generated yet for period ID {{ periodId }}.</p>
+                  <p style="color: #666; font-size: 14px;">Try period ID 2 to see existing score cards.</p>
                 </td>
               </tr>
             </tbody>

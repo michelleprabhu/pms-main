@@ -1,7 +1,8 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 
 interface ScoreCard {
   employeeName: string;
@@ -25,12 +26,11 @@ interface ReviewPeriod {
   templateUrl: './score-cards.html',
   styleUrl: './score-cards.css',
 })
-export class ScoreCards {
+export class ScoreCards implements OnInit {
   isSidebarCollapsed = false;
+  apiUrl = 'http://localhost:5002/api';
 
-  activeReviewPeriods: ReviewPeriod[] = [
-    { id: 1, name: 'Q1 2025', startDate: 'Jan 1, 2025', endDate: 'Mar 31, 2025', status: 'Active', employeeCount: 50 }
-  ];
+  activeReviewPeriods: ReviewPeriod[] = [];
 
   completedReviewPeriods: ReviewPeriod[] = [
     { id: 2, name: 'Q4 2024', startDate: 'Oct 1, 2024', endDate: 'Dec 31, 2024', status: 'Completed', employeeCount: 248 },
@@ -98,7 +98,43 @@ export class ScoreCards {
     }
   ];
 
-  constructor(private router: Router) {}
+  constructor(private router: Router, private http: HttpClient) {}
+
+  ngOnInit() {
+    this.loadActiveReviewPeriods();
+  }
+
+  loadActiveReviewPeriods() {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      console.error('No token found');
+      return;
+    }
+
+    const headers = new HttpHeaders({
+      'Authorization': `Bearer ${token}`
+    });
+
+    this.http.get(`${this.apiUrl}/review-periods/active`, { headers }).subscribe({
+      next: (response: any) => {
+        this.activeReviewPeriods = response.map((period: any) => ({
+          id: period.id,
+          name: period.name,
+          startDate: period.startDate,
+          endDate: period.endDate,
+          status: period.status,
+          employeeCount: period.employeeCount || 0
+        }));
+      },
+      error: (err) => {
+        console.error('Failed to load active review periods', err);
+        // Fallback to default if API fails
+        this.activeReviewPeriods = [
+          { id: 2, name: 'Q1 2025', startDate: 'Jan 1, 2025', endDate: 'Mar 31, 2025', status: 'Active', employeeCount: 0 }
+        ];
+      }
+    });
+  }
 
   toggleSidebar() {
     this.isSidebarCollapsed = !this.isSidebarCollapsed;

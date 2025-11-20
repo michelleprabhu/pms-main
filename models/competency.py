@@ -21,6 +21,5 @@ class Competency(db.Model):
             'description': self.description,
             'proficiency_levels': self.proficiency_levels,
             'owner_id': self.owner_id,
-            'goal_count': len(self.goals),
             'created_at': self.created_at.isoformat()
         }

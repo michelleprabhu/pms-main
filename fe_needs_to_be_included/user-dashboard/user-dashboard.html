@@ -1,0 +1,280 @@
+<div class="dashboard-container">
+  <!-- Sidebar -->
+  <aside class="sidebar" [class.collapsed]="isSidebarCollapsed">
+    <div class="sidebar-header">
+      <img *ngIf="!isSidebarCollapsed" src="assets/logo.png" alt="iDUELA" class="logo" />
+      <img *ngIf="isSidebarCollapsed" src="assets/logo.png" alt="iDUELA" class="logo-small" />
+    </div>
+    
+    <nav class="sidebar-nav">
+      <div class="nav-section">
+        <div class="section-title" *ngIf="!isSidebarCollapsed">Main</div>
+        <div class="nav-item active">
+          <span class="nav-icon"><i class="fas fa-chart-line"></i></span>
+          <span class="nav-text" *ngIf="!isSidebarCollapsed">Dashboard</span>
+        </div>
+        <div class="nav-item" (click)="navigateToUsers()">
+          <span class="nav-icon"><i class="fas fa-users"></i></span>
+          <span class="nav-text" *ngIf="!isSidebarCollapsed">User Management</span>
+        </div>
+        <div class="nav-item" (click)="navigateToRoles()">
+          <span class="nav-icon"><i class="fas fa-user-shield"></i></span>
+          <span class="nav-text" *ngIf="!isSidebarCollapsed">Role Management</span>
+        </div>
+      </div>
+      
+      <div class="nav-spacer"></div>
+      
+      <div class="nav-item sign-out" (click)="signOut()">
+        <span class="nav-icon"><i class="fas fa-sign-out-alt"></i></span>
+        <span class="nav-text" *ngIf="!isSidebarCollapsed">Sign Out</span>
+      </div>
+    </nav>
+  </aside>
+
+  <!-- Main Content -->
+  <div class="main-content">
+    <!-- Top Bar -->
+    <header class="top-bar">
+      <button class="sidebar-toggle" (click)="toggleSidebar()">
+        <i class="fas fa-bars"></i>
+      </button>
+      <div class="page-name">Performance Management System</div>
+      <div class="user-info">
+        <span>User</span>
+        <i class="fas fa-user-circle"></i>
+      </div>
+    </header>
+
+    <!-- Page Content -->
+    <div class="dashboard-content">
+      <!-- Metrics Cards -->
+      <div class="metrics-grid">
+        <div class="metric-card">
+          <div class="metric-header">
+            <span class="metric-label">Total Users</span>
+            <span class="metric-trend positive">↗ +4.2%</span>
+          </div>
+          <div class="metric-value">{{totalUsers}}</div>
+          <div class="metric-status">
+            <span class="status-icon">↗</span>
+            <span class="status-text">5 this month</span>
+          </div>
+          <div class="metric-description">System users</div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-header">
+            <span class="metric-label">Active Users</span>
+            <span class="metric-trend positive">↗ +2.1%</span>
+          </div>
+          <div class="metric-value">{{activeUsers}}</div>
+          <div class="metric-status">
+            <span class="status-icon">↗</span>
+            <span class="status-text">94% active rate</span>
+          </div>
+          <div class="metric-description">Currently active</div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-header">
+            <span class="metric-label">Total Employees</span>
+            <span class="metric-trend positive">↗ +2.5%</span>
+          </div>
+          <div class="metric-value">{{totalEmployees}}</div>
+          <div class="metric-status">
+            <span class="status-icon">↗</span>
+            <span class="status-text">3 this month</span>
+          </div>
+          <div class="metric-description">Company employees</div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-header">
+            <span class="metric-label">Pending Actions</span>
+            <span class="metric-trend negative">↘ -12%</span>
+          </div>
+          <div class="metric-value">{{pendingActions}}</div>
+          <div class="metric-status">
+            <span class="status-icon">↘</span>
+            <span class="status-text">Requires attention</span>
+          </div>
+          <div class="metric-description">Password resets needed</div>
+        </div>
+      </div>
+
+      <!-- Recent Activity Section -->
+      <div class="activity-section">
+        <h2 class="section-title">Recent User Activity</h2>
+        
+        <div class="table-card">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>S.No</th>
+                <th>Username</th>
+                <th>Action</th>
+                <th>Date</th>
+                <th>Time</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let activity of recentActivities; let i = index">
+                <td>{{i + 1}}</td>
+                <td><strong>{{activity.username}}</strong></td>
+                <td>
+                  <span class="action-badge" [ngClass]="getActionClass(activity.actionType)">
+                    {{activity.action}}
+                  </span>
+                </td>
+                <td>{{activity.date}}</td>
+                <td>{{activity.time}}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+
+  <aside class="sidebar" [class.collapsed]="isSidebarCollapsed">
+    <div class="sidebar-header">
+      <img *ngIf="!isSidebarCollapsed" src="assets/logo.png" alt="iDUELA" class="logo" />
+      <img *ngIf="isSidebarCollapsed" src="assets/logo.png" alt="iDUELA" class="logo-small" />
+    </div>
+    
+    <nav class="sidebar-nav">
+      <div class="nav-section">
+        <div class="section-title" *ngIf="!isSidebarCollapsed">Main</div>
+        <div class="nav-item active">
+          <span class="nav-icon"><i class="fas fa-chart-line"></i></span>
+          <span class="nav-text" *ngIf="!isSidebarCollapsed">Dashboard</span>
+        </div>
+        <div class="nav-item" (click)="navigateToUsers()">
+          <span class="nav-icon"><i class="fas fa-users"></i></span>
+          <span class="nav-text" *ngIf="!isSidebarCollapsed">User Management</span>
+        </div>
+        <div class="nav-item" (click)="navigateToRoles()">
+          <span class="nav-icon"><i class="fas fa-user-shield"></i></span>
+          <span class="nav-text" *ngIf="!isSidebarCollapsed">Role Management</span>
+        </div>
+      </div>
+      
+      <div class="nav-spacer"></div>
+      
+      <div class="nav-item sign-out" (click)="signOut()">
+        <span class="nav-icon"><i class="fas fa-sign-out-alt"></i></span>
+        <span class="nav-text" *ngIf="!isSidebarCollapsed">Sign Out</span>
+      </div>
+    </nav>
+  </aside>
+
+  <!-- Main Content -->
+  <div class="main-content">
+    <!-- Top Bar -->
+    <header class="top-bar">
+      <button class="sidebar-toggle" (click)="toggleSidebar()">
+        <i class="fas fa-bars"></i>
+      </button>
+      <div class="page-name">Performance Management System</div>
+      <div class="user-info">
+        <span>User</span>
+        <i class="fas fa-user-circle"></i>
+      </div>
+    </header>
+
+    <!-- Page Content -->
+    <div class="dashboard-content">
+      <!-- Metrics Cards -->
+      <div class="metrics-grid">
+        <div class="metric-card">
+          <div class="metric-header">
+            <span class="metric-label">Total Users</span>
+            <span class="metric-trend positive">↗ +4.2%</span>
+          </div>
+          <div class="metric-value">{{totalUsers}}</div>
+          <div class="metric-status">
+            <span class="status-icon">↗</span>
+            <span class="status-text">5 this month</span>
+          </div>
+          <div class="metric-description">System users</div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-header">
+            <span class="metric-label">Active Users</span>
+            <span class="metric-trend positive">↗ +2.1%</span>
+          </div>
+          <div class="metric-value">{{activeUsers}}</div>
+          <div class="metric-status">
+            <span class="status-icon">↗</span>
+            <span class="status-text">94% active rate</span>
+          </div>
+          <div class="metric-description">Currently active</div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-header">
+            <span class="metric-label">Total Employees</span>
+            <span class="metric-trend positive">↗ +2.5%</span>
+          </div>
+          <div class="metric-value">{{totalEmployees}}</div>
+          <div class="metric-status">
+            <span class="status-icon">↗</span>
+            <span class="status-text">3 this month</span>
+          </div>
+          <div class="metric-description">Company employees</div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-header">
+            <span class="metric-label">Pending Actions</span>
+            <span class="metric-trend negative">↘ -12%</span>
+          </div>
+          <div class="metric-value">{{pendingActions}}</div>
+          <div class="metric-status">
+            <span class="status-icon">↘</span>
+            <span class="status-text">Requires attention</span>
+          </div>
+          <div class="metric-description">Password resets needed</div>
+        </div>
+      </div>
+
+      <!-- Recent Activity Section -->
+      <div class="activity-section">
+        <h2 class="section-title">Recent User Activity</h2>
+        
+        <div class="table-card">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>S.No</th>
+                <th>Username</th>
+                <th>Action</th>
+                <th>Date</th>
+                <th>Time</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let activity of recentActivities; let i = index">
+                <td>{{i + 1}}</td>
+                <td><strong>{{activity.username}}</strong></td>
+                <td>
+                  <span class="action-badge" [ngClass]="getActionClass(activity.actionType)">
+                    {{activity.action}}
+                  </span>
+                </td>
+                <td>{{activity.date}}</td>
+                <td>{{activity.time}}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+

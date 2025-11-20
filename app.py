@@ -492,6 +492,376 @@ def register_routes(app):
             'already_existed': len(created) == 0
         }), 201
 
+    # ==================== GOALS API ENDPOINTS (Phase 1) ====================
+    
+    @app.route('/api/score-cards', methods=['GET'])
+    @authenticate_token
+    def get_score_cards():
+        """Get all score cards, optionally filtered by review_period_id"""
+        review_period_id = request.args.get('review_period_id', type=int)
+        
+        query = ScoreCard.query.filter_by(deleted_at=None)
+        if review_period_id:
+            query = query.filter_by(review_period_id=review_period_id)
+        
+        score_cards = query.all()
+        
+        result = []
+        for sc in score_cards:
+            result.append({
+                'id': sc.id,
+                'employee_id': sc.employee_id,
+                'review_period_id': sc.review_period_id,
+                'status': sc.status,
+                'employee': {
+                    'id': sc.employee.id,
+                    'full_name': sc.employee.full_name,
+                    'email': sc.employee.email,
+                    'department': {
+                        'id': sc.employee.department.id if sc.employee.department else None,
+                        'name': sc.employee.department.name if sc.employee.department else None
+                    },
+                    'position': {
+                        'id': sc.employee.position.id if sc.employee.position else None,
+                        'title': sc.employee.position.title if sc.employee.position else None
+                    }
+                } if sc.employee else None
+            })
+        
+        return jsonify(result), 200
+    
+    @app.route('/api/score-cards/<int:score_card_id>/weightage', methods=['GET'])
+    @authenticate_token
+    def get_score_card_weightage(score_card_id):
+        """Get weightage distribution for a score card"""
+        score_card = ScoreCard.query.get(score_card_id)
+        if not score_card:
+            return jsonify({'error': 'Score card not found'}), 404
+        
+        return jsonify({
+            'score_card_id': score_card_id,
+            'goals_weightage': score_card.goals_weightage,
+            'competencies_weightage': score_card.competencies_weightage,
+            'values_weightage': score_card.values_weightage,
+            'total': score_card.goals_weightage + score_card.competencies_weightage + score_card.values_weightage
+        }), 200
+
+    @app.route('/api/score-cards/<int:score_card_id>/weightage', methods=['PUT'])
+    @authenticate_token
+    @role_required('HR Admin')
+    def update_score_card_weightage(score_card_id):
+        """Update weightage distribution (must total 100%)"""
+        score_card = ScoreCard.query.get(score_card_id)
+        if not score_card:
+            return jsonify({'error': 'Score card not found'}), 404
+        
+        data = request.get_json()
+        
+        goals_weightage = data.get('goals_weightage')
+        competencies_weightage = data.get('competencies_weightage')
+        values_weightage = data.get('values_weightage')
+        
+        # Validate all three are provided
+        if goals_weightage is None or competencies_weightage is None or values_weightage is None:
+            return jsonify({'error': 'All three weightages (goals, competencies, values) are required'}), 400
+        
+        # Validate they total to 100%
+        total = goals_weightage + competencies_weightage + values_weightage
+        if total != 100:
+            return jsonify({
+                'error': f'Weightages must total 100%. Current total: {total}%'
+            }), 400
+        
+        # Update score card
+        score_card.goals_weightage = goals_weightage
+        score_card.competencies_weightage = competencies_weightage
+        score_card.values_weightage = values_weightage
+        score_card.updated_by = request.user['user_id']
+        db.session.commit()
+        
+        return jsonify({
+            'message': 'Weightage updated successfully',
+            'goals_weightage': goals_weightage,
+            'competencies_weightage': competencies_weightage,
+            'values_weightage': values_weightage
+        }), 200
+    
+    @app.route('/api/score-cards/<int:score_card_id>/goals', methods=['GET'])
+    @authenticate_token
+    def get_score_card_goals(score_card_id):
+        """Get all goals for a score card with planning progress"""
+        
+        score_card = ScoreCard.query.get(score_card_id)
+        if not score_card:
+            return jsonify({'error': 'Score card not found'}), 404
+        
+        # Set default weightage if null (for score cards created before migration)
+        if score_card.goals_weightage is None:
+            score_card.goals_weightage = 60
+            score_card.competencies_weightage = 25
+            score_card.values_weightage = 15
+            db.session.commit()
+        
+        # Get all active goals for this score card
+        goals = Goal.query.filter_by(
+            score_card_id=score_card_id,
+            deleted_at=None
+        ).all()
+        
+        # Calculate planning progress by role
+        planning_progress = {}
+        for role in ['HR', 'Manager', 'Employee']:
+            role_goals = [g for g in goals if g.added_by_role == role]
+            planning_progress[role] = {
+                'count': len(role_goals),
+                'total_weight': sum(g.weight for g in role_goals)
+            }
+        
+        planning_progress['total_weight'] = sum(g.weight for g in goals)
+        
+        # Format goals for response (using to_dict method which includes user details)
+        goals_data = [goal.to_dict() for goal in goals]
+        
+        return jsonify({
+            'score_card_id': score_card_id,
+            'goals_weightage': score_card.goals_weightage,
+            'goals': goals_data,
+            'planning_progress': planning_progress
+        }), 200
+
+    @app.route('/api/score-cards/<int:score_card_id>/goals', methods=['POST'])
+    @authenticate_token
+    def add_goal_to_score_card(score_card_id):
+        """Add a new goal to score card"""
+        
+        score_card = ScoreCard.query.get(score_card_id)
+        if not score_card:
+            return jsonify({'error': 'Score card not found'}), 404
+        
+        data = request.get_json()
+        
+        # Validate required fields
+        if not data.get('goal_name'):
+            return jsonify({'error': 'goal_name is required'}), 400
+        if not data.get('weight'):
+            return jsonify({'error': 'weight is required'}), 400
+        
+        # Extract user info from JWT
+        current_user = request.user
+        # JWT token has 'role' field (e.g., "HR Admin", "Manager", "Employee")
+        role_name = current_user.get('role') or current_user.get('role_name') or ''
+        
+        # Map role name to simplified role for added_by_role field
+        role_mapping = {
+            'HR Admin': 'HR',
+            'HR': 'HR',
+            'Manager': 'Manager',
+            'Employee': 'Employee'
+        }
+        added_by_role = role_mapping.get(role_name, 'Employee')
+        
+        # Debug: log the role mapping
+        print(f"DEBUG: JWT role={role_name}, mapped to added_by_role={added_by_role}")
+        
+        # Validate total weight doesn't exceed goals_weightage
+        existing_goals = Goal.query.filter_by(
+            score_card_id=score_card_id,
+            deleted_at=None
+        ).all()
+        
+        total_existing_weight = sum(g.weight for g in existing_goals)
+        new_weight = int(data.get('weight', 0))
+        
+        if total_existing_weight + new_weight > score_card.goals_weightage:
+            return jsonify({
+                'error': f'Total goal weight would exceed {score_card.goals_weightage}%. Current total: {total_existing_weight}%, trying to add: {new_weight}%'
+            }), 400
+        
+        # Parse dates if provided
+        from datetime import datetime
+        start_date = None
+        end_date = None
+        deadline_date = None
+        
+        if data.get('start_date'):
+            try:
+                start_date = datetime.strptime(data['start_date'], '%Y-%m-%d').date()
+            except ValueError:
+                return jsonify({'error': 'Invalid start_date format. Use YYYY-MM-DD'}), 400
+        
+        if data.get('end_date'):
+            try:
+                end_date = datetime.strptime(data['end_date'], '%Y-%m-%d').date()
+            except ValueError:
+                return jsonify({'error': 'Invalid end_date format. Use YYYY-MM-DD'}), 400
+        
+        if data.get('deadline_date'):
+            try:
+                deadline_date = datetime.strptime(data['deadline_date'], '%Y-%m-%d').date()
+            except ValueError:
+                return jsonify({'error': 'Invalid deadline_date format. Use YYYY-MM-DD'}), 400
+        
+        # Create new goal
+        goal = Goal(
+            score_card_id=score_card_id,
+            goal_name=data['goal_name'],
+            description=data.get('description'),
+            success_criteria=data.get('success_criteria'),
+            weight=new_weight,
+            added_by_role=added_by_role,
+            added_by_user_id=current_user['user_id'],
+            start_date=start_date,
+            end_date=end_date,
+            deadline_date=deadline_date,
+            status=data.get('status', 'active'),
+            created_by=current_user['user_id'],
+            updated_by=current_user['user_id']
+        )
+        
+        db.session.add(goal)
+        db.session.commit()
+        
+        return jsonify({
+            'message': 'Goal added successfully',
+            'goal': goal.to_dict()
+        }), 201
+
+    @app.route('/api/goals/<int:goal_id>', methods=['PUT'])
+    @authenticate_token
+    def update_goal(goal_id):
+        """Update an existing goal"""
+        
+        goal = Goal.query.get(goal_id)
+        if not goal:
+            return jsonify({'error': 'Goal not found'}), 404
+        
+        if goal.deleted_at:
+            return jsonify({'error': 'Goal has been deleted'}), 404
+        
+        data = request.get_json()
+        current_user = request.user
+        
+        # Update fields if provided
+        if 'goal_name' in data:
+            goal.goal_name = data['goal_name']
+        if 'description' in data:
+            goal.description = data['description']
+        if 'success_criteria' in data:
+            goal.success_criteria = data['success_criteria']
+        if 'status' in data:
+            goal.status = data['status']
+        
+        # Update weight with validation
+        if 'weight' in data:
+            new_weight = int(data['weight'])
+            
+            # Get score card to check weightage limit
+            score_card = ScoreCard.query.get(goal.score_card_id)
+            
+            # Calculate total weight excluding current goal
+            other_goals = Goal.query.filter(
+                Goal.score_card_id == goal.score_card_id,
+                Goal.id != goal_id,
+                Goal.deleted_at.is_(None)
+            ).all()
+            
+            total_other_weight = sum(g.weight for g in other_goals)
+            
+            if total_other_weight + new_weight > score_card.goals_weightage:
+                return jsonify({
+                    'error': f'Total goal weight would exceed {score_card.goals_weightage}%'
+                }), 400
+            
+            goal.weight = new_weight
+        
+        # Update dates if provided
+        if 'start_date' in data and data['start_date']:
+            from datetime import datetime
+            try:
+                goal.start_date = datetime.strptime(data['start_date'], '%Y-%m-%d').date()
+            except ValueError:
+                return jsonify({'error': 'Invalid start_date format. Use YYYY-MM-DD'}), 400
+        
+        if 'end_date' in data and data['end_date']:
+            from datetime import datetime
+            try:
+                goal.end_date = datetime.strptime(data['end_date'], '%Y-%m-%d').date()
+            except ValueError:
+                return jsonify({'error': 'Invalid end_date format. Use YYYY-MM-DD'}), 400
+        
+        if 'deadline_date' in data and data['deadline_date']:
+            from datetime import datetime
+            try:
+                goal.deadline_date = datetime.strptime(data['deadline_date'], '%Y-%m-%d').date()
+            except ValueError:
+                return jsonify({'error': 'Invalid deadline_date format. Use YYYY-MM-DD'}), 400
+        
+        goal.updated_by = current_user['user_id']
+        db.session.commit()
+        
+        return jsonify({
+            'message': 'Goal updated successfully',
+            'goal': goal.to_dict()
+        }), 200
+
+    @app.route('/api/goals/<int:goal_id>', methods=['DELETE'])
+    @authenticate_token
+    def delete_goal(goal_id):
+        """Soft delete a goal"""
+        
+        goal = Goal.query.get(goal_id)
+        if not goal:
+            return jsonify({'error': 'Goal not found'}), 404
+        
+        if goal.deleted_at:
+            return jsonify({'error': 'Goal already deleted'}), 404
+        
+        # Soft delete
+        from datetime import datetime
+        goal.deleted_at = datetime.utcnow()
+        goal.updated_by = request.user['user_id']
+        db.session.commit()
+        
+        return jsonify({'message': 'Goal deleted successfully'}), 200
+
+    @app.route('/api/score-cards/<int:score_card_id>/send-for-acceptance', methods=['POST'])
+    @authenticate_token
+    @role_required('HR Admin')
+    def send_score_card_for_acceptance(score_card_id):
+        """Send score card for employee acceptance (validates goal weights)"""
+        
+        score_card = ScoreCard.query.get(score_card_id)
+        if not score_card:
+            return jsonify({'error': 'Score card not found'}), 404
+        
+        # Validate total goal weights = goals_weightage
+        goals = Goal.query.filter_by(
+            score_card_id=score_card_id,
+            deleted_at=None
+        ).all()
+        
+        total_goal_weight = sum(g.weight for g in goals)
+        
+        if total_goal_weight != score_card.goals_weightage:
+            return jsonify({
+                'error': f'Total goal weight must equal {score_card.goals_weightage}%. Current: {total_goal_weight}%',
+                'required': score_card.goals_weightage,
+                'current': total_goal_weight
+            }), 400
+        
+        # Update status
+        score_card.status = 'pending_acceptance'
+        score_card.updated_by = request.user['user_id']
+        db.session.commit()
+        
+        # TODO: Create notification for employee
+        
+        return jsonify({
+            'message': 'Score card sent for employee acceptance',
+            'score_card_id': score_card_id,
+            'status': 'pending_acceptance'
+        }), 200
+
 
 def register_commands(app):
     """Register Flask CLI commands"""

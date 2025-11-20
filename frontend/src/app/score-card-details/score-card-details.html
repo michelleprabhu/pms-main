@@ -80,32 +80,54 @@
         </div>
       </div>
 
-      <!-- Weightage Distribution Card (Compact) -->
+      <!-- Weightage Distribution Card (Compact) with Draggable Sliders -->
       <div class="weightage-compact-card">
-        <h3 class="weightage-compact-title">Performance Weightage Distribution</h3>
+        <div class="weightage-header">
+          <h3 class="weightage-compact-title">Performance Weightage Distribution</h3>
+          <button class="btn-save-weightage" (click)="updateWeightage()" *ngIf="isPlanningPhase()">
+            <i class="fas fa-save"></i> Save
+          </button>
+        </div>
         
         <div class="weightage-compact-row">
           <span class="weightage-compact-label">Goals:</span>
-          <span class="weightage-compact-percent">60%</span>
+          <input type="range" min="0" max="100" [(ngModel)]="goalsWeightage" 
+                 class="weightage-slider" 
+                 [disabled]="!isPlanningPhase()"
+                 (input)="onWeightageChange()">
+          <span class="weightage-compact-percent">{{ goalsWeightage }}%</span>
           <div class="weightage-compact-bar-container">
-            <div class="weightage-compact-bar" style="width: 60%"></div>
+            <div class="weightage-compact-bar" [style.width.%]="goalsWeightage"></div>
           </div>
         </div>
 
         <div class="weightage-compact-row">
           <span class="weightage-compact-label">Competencies:</span>
-          <span class="weightage-compact-percent">25%</span>
+          <input type="range" min="0" max="100" [(ngModel)]="competenciesWeightage" 
+                 class="weightage-slider" 
+                 [disabled]="!isPlanningPhase()"
+                 (input)="onWeightageChange()">
+          <span class="weightage-compact-percent">{{ competenciesWeightage }}%</span>
           <div class="weightage-compact-bar-container">
-            <div class="weightage-compact-bar" style="width: 25%"></div>
+            <div class="weightage-compact-bar" [style.width.%]="competenciesWeightage"></div>
           </div>
         </div>
 
         <div class="weightage-compact-row">
           <span class="weightage-compact-label">Values:</span>
-          <span class="weightage-compact-percent">15%</span>
+          <input type="range" min="0" max="100" [(ngModel)]="valuesWeightage" 
+                 class="weightage-slider" 
+                 [disabled]="!isPlanningPhase()"
+                 (input)="onWeightageChange()">
+          <span class="weightage-compact-percent">{{ valuesWeightage }}%</span>
           <div class="weightage-compact-bar-container">
-            <div class="weightage-compact-bar" style="width: 15%"></div>
+            <div class="weightage-compact-bar" [style.width.%]="valuesWeightage"></div>
           </div>
+        </div>
+        
+        <div class="weightage-total" [class.invalid]="getTotalWeightage() !== 100">
+          Total: {{ getTotalWeightage() }}%
+          <span *ngIf="getTotalWeightage() !== 100" class="error-text"> (Must equal 100%)</span>
         </div>
       </div>
 

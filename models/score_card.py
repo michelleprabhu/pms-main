@@ -13,6 +13,11 @@ class ScoreCard(db.Model):
     status = db.Column(db.String(50), nullable=False, default='planning')
     overall_rating = db.Column(db.Float, nullable=True)
     
+    # Weightage distribution (must sum to 100%)
+    goals_weightage = db.Column(db.Integer, default=60)
+    competencies_weightage = db.Column(db.Integer, default=25)
+    values_weightage = db.Column(db.Integer, default=15)
+    
     # Legacy fields (now nullable for backward compatibility)
     title = db.Column(db.String(200), nullable=True)
     content = db.Column(db.Text, nullable=True)

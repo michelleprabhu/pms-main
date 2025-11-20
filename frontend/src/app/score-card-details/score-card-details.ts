@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { Router, ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 
 interface ScoreCard {
   employeeName: string;
@@ -53,69 +54,18 @@ export class ScoreCardDetails implements OnInit {
   scoreCard: ScoreCard | null = null;
   scoreCardId: number = 0;
   newComment: string = '';
+  apiUrl = 'http://localhost:5002/api';
+  goalsWeightage: number = 60;
+  competenciesWeightage: number = 25;
+  valuesWeightage: number = 15;
+  planningProgress: any = {
+    HR: { count: 0, total_weight: 0 },
+    Manager: { count: 0, total_weight: 0 },
+    Employee: { count: 0, total_weight: 0 },
+    total_weight: 0
+  };
   
-  goals: Goal[] = [
-    {
-      id: 1,
-      name: 'Increase Sales Revenue',
-      description: 'Achieve 20% growth in quarterly sales',
-      successCriteria: 'Revenue increases by $500K and meets or exceeds 20% growth target with documented customer acquisitions',
-      status: 'In Progress',
-      weight: 30,
-      reviewPeriod: 'Q1 2025',
-      startDate: 'Jan 1, 2025',
-      endDate: 'Mar 31, 2025',
-      addedBy: 'HR'
-    },
-    {
-      id: 2,
-      name: 'Improve Customer Satisfaction',
-      description: 'Increase CSAT score to 4.5/5',
-      successCriteria: 'CSAT survey results show consistent scores of 4.5 or higher across all customer touchpoints for 3 consecutive months',
-      status: 'In Progress',
-      weight: 25,
-      reviewPeriod: 'Q1 2025',
-      startDate: 'Jan 1, 2025',
-      endDate: 'Mar 31, 2025',
-      addedBy: 'HR'
-    },
-    {
-      id: 3,
-      name: 'Complete Product Launch',
-      description: 'Successfully launch new product line',
-      successCriteria: 'Product is live in production, all features are functional, user documentation is published, and 100+ active users within first month',
-      status: 'Not Started',
-      weight: 20,
-      reviewPeriod: 'Q1 2025',
-      startDate: 'Feb 1, 2025',
-      endDate: 'Mar 31, 2025',
-      addedBy: 'HR'
-    },
-    {
-      id: 4,
-      name: 'Team Development',
-      description: 'Conduct training sessions for team members',
-      successCriteria: 'Complete 8 training sessions with 90%+ attendance and positive feedback scores above 4/5 from participants',
-      status: 'In Progress',
-      weight: 15,
-      reviewPeriod: 'Q1 2025',
-      startDate: 'Jan 15, 2025',
-      endDate: 'Mar 15, 2025',
-      addedBy: 'Manager'
-    },
-    {
-      id: 5,
-      name: 'Process Improvement',
-      description: 'Streamline workflow processes',
-      successCriteria: 'Process efficiency improved by 25%, documented procedures created, and team adoption rate of 80% or higher',
-      status: 'Completed',
-      weight: 10,
-      reviewPeriod: 'Q1 2025',
-      startDate: 'Jan 1, 2025',
-      endDate: 'Feb 28, 2025',
-      addedBy: 'Employee'
-    }
-  ];
+  goals: Goal[] = [];
 
   planningComments: PlanningComment[] = [
     {
@@ -234,7 +184,7 @@ export class ScoreCardDetails implements OnInit {
     }
   ];
 
-  constructor(private router: Router, private route: ActivatedRoute) {
+  constructor(private router: Router, private route: ActivatedRoute, private http: HttpClient) {
     // Set default score card if none provided
     this.scoreCard = {
       employeeName: 'John Doe',
@@ -248,40 +198,88 @@ export class ScoreCardDetails implements OnInit {
       this.scoreCardId = +params['id'] || 1;
       const reviewPeriod = params['reviewPeriod'] || 'Q1 2025';
       
-      // In a real app, fetch score card data based on this.scoreCardId
-      // For now, we'll use mock data
-      if (this.scoreCardId === 1) {
-        this.scoreCard = {
-          employeeName: 'John Doe',
-          reviewPeriod: reviewPeriod,
-          status: 'Pending Employee Acceptance'
-        };
-      } else if (this.scoreCardId === 2) {
-        // Jane Smith - blank score card
+      // Load goals from backend
+      this.loadGoals();
+      
+      // Set default score card info
+      this.scoreCard = {
+        employeeName: 'John Doe',
+        reviewPeriod: reviewPeriod,
+        status: 'Plan Started'
+      };
+    });
+  }
+
+  loadGoals() {
+    const token = localStorage.getItem('token');
+    const headers = new HttpHeaders({
+      'Authorization': `Bearer ${token}`
+    });
+
+    // Load weightage first
+    this.http.get(`${this.apiUrl}/score-cards/${this.scoreCardId}/weightage`, { headers }).subscribe({
+      next: (response: any) => {
+        this.goalsWeightage = response.goals_weightage || 60;
+        this.competenciesWeightage = response.competencies_weightage || 25;
+        this.valuesWeightage = response.values_weightage || 15;
+      },
+      error: (err) => {
+        console.error('Failed to load weightage', err);
+      }
+    });
+
+    // Load goals
+    this.http.get(`${this.apiUrl}/score-cards/${this.scoreCardId}/goals`, { headers }).subscribe({
+      next: (response: any) => {
+        this.goalsWeightage = response.goals_weightage || this.goalsWeightage;
+        this.planningProgress = response.planning_progress;
+        
+        // Map backend response to frontend format
+        this.goals = response.goals.map((goal: any) => ({
+          id: goal.id,
+          name: goal.goal_name,
+          description: goal.description || '',
+          successCriteria: goal.success_criteria || '',
+          status: goal.status || 'active',
+          weight: goal.weight,
+          reviewPeriod: 'Q1 2025',
+          startDate: goal.start_date || '',
+          endDate: goal.end_date || '',
+          addedBy: goal.added_by_role
+        }));
+      },
+      error: (err) => {
+        console.error('Failed to load goals', err);
+        // Keep empty array if error
         this.goals = [];
-        this.scoreCard = {
-          employeeName: 'Jane Smith',
-          reviewPeriod: reviewPeriod,
-          status: 'Plan Not Started'
-        };
-      } else if (this.scoreCardId === 3) {
-        // Blank score card with no goals
-        this.goals = [];
-        this.scoreCard = {
-          employeeName: 'John Doe',
-          reviewPeriod: reviewPeriod,
-          status: 'Plan Started'
-        };
-      } else {
-        // For completed score cards, mark all goals as completed
-        this.goals.forEach(goal => {
-          goal.status = 'Completed';
-        });
-        this.scoreCard = {
-          employeeName: 'John Doe',
-          reviewPeriod: reviewPeriod,
-          status: 'Evaluation Complete'
-        };
+      }
+    });
+  }
+
+  updateWeightage() {
+    const total = this.goalsWeightage + this.competenciesWeightage + this.valuesWeightage;
+    if (total !== 100) {
+      alert(`Total weightage must equal 100%. Current total: ${total}%`);
+      return;
+    }
+
+    const token = localStorage.getItem('token');
+    const headers = new HttpHeaders({
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    });
+
+    this.http.put(`${this.apiUrl}/score-cards/${this.scoreCardId}/weightage`, {
+      goals_weightage: this.goalsWeightage,
+      competencies_weightage: this.competenciesWeightage,
+      values_weightage: this.valuesWeightage
+    }, { headers }).subscribe({
+      next: (response: any) => {
+        alert('Weightage updated successfully!');
+      },
+      error: (err) => {
+        console.error('Failed to update weightage', err);
+        alert('Error: ' + (err.error?.error || 'Failed to update weightage'));
       }
     });
   }
@@ -305,17 +303,50 @@ export class ScoreCardDetails implements OnInit {
   }
 
   canSendForAcceptance(): boolean {
-    return this.getTotalWeight() === 100;
+    return this.getTotalWeight() === this.goalsWeightage;
+  }
+
+  getTotalWeightage(): number {
+    return this.goalsWeightage + this.competenciesWeightage + this.valuesWeightage;
+  }
+
+  onWeightageChange() {
+    // Auto-adjust other sliders to maintain 100% total
+    const total = this.getTotalWeightage();
+    if (total > 100) {
+      const excess = total - 100;
+      if (this.competenciesWeightage > 0) {
+        this.competenciesWeightage = Math.max(0, this.competenciesWeightage - excess);
+      }
+      if (this.valuesWeightage > 0 && this.getTotalWeightage() > 100) {
+        this.valuesWeightage = Math.max(0, this.valuesWeightage - (this.getTotalWeightage() - 100));
+      }
+    }
   }
 
   sendForEmployeeAcceptance() {
-    if (this.canSendForAcceptance()) {
-      if (this.scoreCard) {
-        this.scoreCard.status = 'Pending Employee Acceptance';
-        console.log('Sent for employee acceptance');
-        // In a real app, save to backend
-      }
+    if (!this.canSendForAcceptance()) {
+      alert(`Total goal weight must equal ${this.goalsWeightage}%. Current: ${this.getTotalWeight()}%`);
+      return;
     }
+
+    const token = localStorage.getItem('token');
+    const headers = new HttpHeaders({
+      'Authorization': `Bearer ${token}`
+    });
+
+    this.http.post(`${this.apiUrl}/score-cards/${this.scoreCardId}/send-for-acceptance`, {}, { headers }).subscribe({
+      next: (response: any) => {
+        if (this.scoreCard) {
+          this.scoreCard.status = 'Pending Employee Acceptance';
+        }
+        alert('Score card sent for employee acceptance!');
+      },
+      error: (err) => {
+        console.error('Failed to send for acceptance', err);
+        alert('Error: ' + (err.error?.error || 'Failed to send for acceptance'));
+      }
+    });
   }
 
   addComment() {

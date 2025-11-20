@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 
 interface ScoreCardEmployee {
   id: number;
@@ -9,6 +10,7 @@ interface ScoreCardEmployee {
   department: string;
   position: string;
   scoreCardStatus: string;
+  scoreCardId: number;
 }
 
 @Component({
@@ -24,24 +26,69 @@ export class ScoreCardsListComponent implements OnInit {
   reviewPeriodName: string = 'Q1 2025';
   searchQuery: string = '';
   
-  employees: ScoreCardEmployee[] = [
-    { id: 1, name: 'John Doe', department: 'Engineering', position: 'Senior Software Engineer', scoreCardStatus: 'Plan Started' },
-    { id: 2, name: 'Jane Smith', department: 'Engineering', position: 'Product Manager', scoreCardStatus: 'Plan Not Started' },
-    { id: 3, name: 'Mike Johnson', department: 'Sales', position: 'Sales Manager', scoreCardStatus: 'Pending Employee Acceptance' },
-    { id: 4, name: 'Sarah Williams', department: 'HR', position: 'HR Manager', scoreCardStatus: 'Plan Finalized' },
-    { id: 5, name: 'Robert Brown', department: 'Engineering', position: 'Software Engineer', scoreCardStatus: 'Planning in Progress' },
-    { id: 6, name: 'Emily Davis', department: 'Marketing', position: 'Marketing Director', scoreCardStatus: 'Plan Started' },
-    { id: 7, name: 'James Wilson', department: 'Finance', position: 'Financial Analyst', scoreCardStatus: 'Plan Started' },
-    { id: 8, name: 'Linda Martinez', department: 'Operations', position: 'Operations Manager', scoreCardStatus: 'Planning in Progress' }
-  ];
+  employees: ScoreCardEmployee[] = [];
+  apiUrl = 'http://localhost:5002/api';
 
-  constructor(private router: Router, private route: ActivatedRoute) {}
+  constructor(private router: Router, private route: ActivatedRoute, private http: HttpClient) {}
 
   ngOnInit() {
     this.route.queryParams.subscribe(params => {
-      this.periodId = +params['periodId'] || 1;
-      // Set review period name based on ID
+      const periodIdParam = params['periodId'];
+      
+      // Always default to 2 (the active review period) if no periodId provided
+      this.periodId = periodIdParam ? +periodIdParam : 2;
+      
       this.reviewPeriodName = this.getReviewPeriodName(this.periodId);
+      this.loadEmployees();
+    });
+  }
+
+  loadEmployees() {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      console.error('No token found');
+      this.employees = [];
+      return;
+    }
+
+    const headers = new HttpHeaders({
+      'Authorization': `Bearer ${token}`
+    });
+
+    console.log(`Loading employees for periodId: ${this.periodId}`);
+    console.log(`API URL: ${this.apiUrl}/score-cards?review_period_id=${this.periodId}`);
+
+    // Fetch score cards for this review period
+    this.http.get(`${this.apiUrl}/score-cards?review_period_id=${this.periodId}`, { headers }).subscribe({
+      next: (response: any) => {
+        console.log('API Response:', response);
+        // Map score cards to employee list format
+        if (Array.isArray(response)) {
+          this.employees = response.map((sc: any) => ({
+            id: sc.employee_id,
+            name: sc.employee?.full_name || 'Unknown',
+            department: sc.employee?.department?.name || 'N/A',
+            position: sc.employee?.position?.title || 'N/A',
+            scoreCardStatus: sc.status || 'planning',
+            scoreCardId: sc.id
+          }));
+          console.log(`Loaded ${this.employees.length} employees:`, this.employees);
+        } else {
+          console.error('Unexpected response format:', response);
+          this.employees = [];
+        }
+      },
+      error: (err) => {
+        console.error('Failed to load employees', err);
+        console.error('Error status:', err.status);
+        console.error('Error message:', err.message);
+        console.error('Error details:', err.error);
+        if (err.status === 401) {
+          alert('Session expired. Please login again.');
+          this.router.navigate(['/login']);
+        }
+        this.employees = [];
+      }
     });
   }
 
@@ -83,8 +130,9 @@ export class ScoreCardsListComponent implements OnInit {
     this.router.navigate(['/score-cards']);
   }
 
-  viewScoreCardDetail(employeeId: number) {
-    this.router.navigate(['/score-cards/employee-detail', employeeId], { queryParams: { periodId: this.periodId } });
+  viewScoreCardDetail(scoreCardId: number) {
+    // Navigate to score card details page using score card ID
+    this.router.navigate(['/score-card-details'], { queryParams: { id: scoreCardId } });
   }
 
   get filteredEmployees() {

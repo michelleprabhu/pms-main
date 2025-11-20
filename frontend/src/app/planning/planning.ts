@@ -108,11 +108,11 @@ export class PlanningComponent implements OnInit {
           description: profile.description,
           department: profile.department,
           positionCriteria: profile.position_criteria,
-          goalsWeightage: 60,
-          competenciesWeightage: 25,
-          valuesWeightage: 15,
+      goalsWeightage: 60,
+      competenciesWeightage: 25,
+      valuesWeightage: 15,
           matchingEmployees: profile.matching_employees,
-          selected: false
+      selected: false
         }));
       },
       error: (err) => {
@@ -232,9 +232,9 @@ export class PlanningComponent implements OnInit {
 
     this.http.post<any>(`${this.apiUrl}/planning/generate-score-cards`, payload, { headers }).subscribe({
       next: (response) => {
-        this.isGenerating = false;
-        this.closeStartPlanningModal();
-        
+      this.isGenerating = false;
+      this.closeStartPlanningModal();
+      
         // Map response employees to GeneratedEmployee format
         this.generatedEmployees = response.employees.map((emp: any) => ({
           name: emp.name,
@@ -243,7 +243,7 @@ export class PlanningComponent implements OnInit {
         }));
         
         // Show generated employees modal
-        this.showGeneratedEmployees = true;
+      this.showGeneratedEmployees = true;
       },
       error: (err) => {
         this.isGenerating = false;

@@ -18,7 +18,7 @@ class User(UserMixin, AuditMixin, db.Model):
     # Relationships
     role = db.relationship('Role', back_populates='users', foreign_keys=[role_id], lazy=True)
     employee = db.relationship('Employee', back_populates='user', foreign_keys=[employee_id], uselist=False, lazy=True)
-    owned_goals = db.relationship('Goal', foreign_keys='Goal.owner_id', back_populates='owner', lazy=True)
+    # owned_goals relationship removed - goals are now linked to score_cards, not directly to users
     owned_competencies = db.relationship('Competency', foreign_keys='Competency.owner_id', back_populates='owner', lazy=True)
     owned_score_cards = db.relationship('ScoreCard', foreign_keys='ScoreCard.user_id', back_populates='user', lazy=True)
     owned_evaluations = db.relationship('Evaluation', foreign_keys='Evaluation.user_id', back_populates='user', lazy=True)
