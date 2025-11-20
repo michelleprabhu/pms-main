@@ -6,7 +6,7 @@ class Evaluation(db.Model):
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     evaluation_type = db.Column(db.String(20), nullable=False)
-    performance_document_id = db.Column(db.Integer, db.ForeignKey('performance_documents.id'), nullable=False)
+    score_card_id = db.Column(db.Integer, db.ForeignKey('score_cards.id'), nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     evaluator_id = db.Column(db.Integer, db.ForeignKey('users.id'))
     ratings = db.Column(db.JSON, nullable=False)
@@ -23,7 +23,7 @@ class Evaluation(db.Model):
     deleted_at = db.Column(db.DateTime, nullable=True)
 
     # Relationships - overlaps parameter added to fix SQLAlchemy warning
-    performance_document = db.relationship('PerformanceDocument', foreign_keys=[performance_document_id], overlaps="document,evaluations")
+    score_card = db.relationship('ScoreCard', foreign_keys=[score_card_id], overlaps="related_score_card,evaluations")
     user = db.relationship('User', foreign_keys=[user_id], back_populates='owned_evaluations')
     evaluator = db.relationship('User', foreign_keys=[evaluator_id])
 
@@ -40,7 +40,7 @@ class Evaluation(db.Model):
         return {
             'id': self.id,
             'evaluation_type': self.evaluation_type,
-            'performance_document_id': self.performance_document_id,
+            'score_card_id': self.score_card_id,
             'user_id': self.user_id,
             'evaluator_id': self.evaluator_id,
             'ratings': self.ratings,

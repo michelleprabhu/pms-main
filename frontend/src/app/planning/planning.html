@@ -95,38 +95,11 @@
         </div>
       </div>
 
-      <!-- Completed Review Periods -->
-      <div class="review-periods-section">
+      <!-- Completed Review Periods (Future Enhancement) -->
+      <div class="review-periods-section" style="display: none;">
         <h2 class="section-heading">Completed Review Periods</h2>
         <div class="table-container">
-          <table class="periods-table">
-            <thead>
-              <tr>
-                <th>S.No</th>
-                <th>Review Period</th>
-                <th>Start Date</th>
-                <th>End Date</th>
-                <th>Employees</th>
-                <th>Status</th>
-                <th>Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr *ngFor="let period of completedReviewPeriods; let i = index" class="clickable-row" (click)="viewPlanningEmployees(period.id)">
-                <td>{{ i + 1 }}</td>
-                <td class="period-name">{{ period.name }}</td>
-                <td>{{ period.startDate }}</td>
-                <td>{{ period.endDate }}</td>
-                <td>{{ period.employeeCount }}</td>
-                <td><span class="status-badge completed">{{ period.status }}</span></td>
-                <td>
-                  <button class="btn-view-small" (click)="viewPlanningEmployees(period.id); $event.stopPropagation()">
-                    <i class="fas fa-eye"></i> View
-                  </button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+          <p style="text-align: center; padding: 20px; color: #666;">No completed review periods yet.</p>
         </div>
       </div>
     </div>
@@ -170,6 +143,12 @@
                     (click)="toggleProfileSelection(profile)">
                   <td class="checkbox-cell">
                     <div class="custom-checkbox">
+                      <input 
+                        type="checkbox" 
+                        [checked]="profile.selected"
+                        (change)="onProfileSelect(profile.id, $any($event.target).checked)"
+                        (click)="$event.stopPropagation()"
+                        style="display: none;">
                       <i class="fas fa-check" *ngIf="profile.selected"></i>
                     </div>
                   </td>

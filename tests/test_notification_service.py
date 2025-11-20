@@ -20,10 +20,10 @@ def client(app):
 
 def test_create_notification(app):
     with app.app_context():
-        notification = createNotification('user123', 'Test message', 'PerformanceDocument', 'doc456')
+        notification = createNotification('user123', 'Test message', 'ScoreCard', 'doc456')
         assert notification.recipient == 'user123'
         assert notification.message == 'Test message'
-        assert notification.entityType == 'PerformanceDocument'
+        assert notification.entityType == 'ScoreCard'
         assert notification.entityId == 'doc456'
         assert notification.isRead is False
 

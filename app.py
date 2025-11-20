@@ -36,10 +36,11 @@ def create_app():
         from models.review_period import ReviewPeriod
         from models.goal import Goal
         from models.competency import Competency
-        from models.performance_document import PerformanceDocument
+        from models.score_card import ScoreCard
         from models.evaluation import Evaluation
         from models.notification import Notification
         from models.master import Master
+        from models.eligibility_profile import EligibilityProfile
         
         # Now load roles
         from services.role_service import load_roles
@@ -69,14 +70,15 @@ def register_routes(app):
     from models.review_period import ReviewPeriod
     from models.goal import Goal
     from models.competency import Competency
-    from models.performance_document import PerformanceDocument
+    from models.score_card import ScoreCard
     from models.evaluation import Evaluation
     from models.notification import Notification
     from models.master import Master
+    from models.eligibility_profile import EligibilityProfile
     from services.auth_service import create_user, authenticate_user, generate_token, get_user_by_id
     from services.goal_service import create_goal, get_user_goals
     from services.competency_service import create_competency, get_user_competencies
-    from services.performance_document_service import create_performance_document, get_user_documents
+    from services.score_card_service import create_score_card, get_user_score_cards
     from services.evaluation_service import create_evaluation, get_user_evaluations
     from services.notification_service import create_notification, get_unread_notifications, mark_notification_as_read
     from services.review_period_service import (
@@ -177,26 +179,26 @@ def register_routes(app):
         competencies = get_user_competencies(user_id)
         return jsonify([competency.to_dict() for competency in competencies])
 
-    # Performance Document Routes
-    @app.route('/api/performance-documents', methods=['POST'])
+    # Score Card Routes
+    @app.route('/api/score-cards', methods=['POST'])
     @authenticate_token
     @authorize_role(['Manager', 'HR'])
-    def create_performance_document_route():
+    def create_score_card_route():
         data = request.get_json()
-        document = create_performance_document(
+        score_card = create_score_card(
             data['user_id'], 
             data['title'], 
             data['period_start'], 
             data['period_end'], 
             data['status']
         )
-        return jsonify(document.to_dict()), 201
+        return jsonify(score_card.to_dict()), 201
 
-    @app.route('/api/users/<user_id>/performance-documents', methods=['GET'])
+    @app.route('/api/users/<user_id>/score-cards', methods=['GET'])
     @authenticate_token
-    def get_user_documents_route(user_id):
-        documents = get_user_documents(user_id)
-        return jsonify([doc.to_dict() for doc in documents])
+    def get_user_score_cards_route(user_id):
+        score_cards = get_user_score_cards(user_id)
+        return jsonify([card.to_dict() for card in score_cards])
 
     # Evaluation Routes
     @app.route('/api/evaluations', methods=['POST'])
@@ -350,6 +352,145 @@ def register_routes(app):
         if not period:
             return jsonify({'error': 'Review period not found'}), 404
         return jsonify(period.to_dict())
+
+    @app.route('/api/review-periods/active', methods=['GET'])
+    @authenticate_token
+    def get_active_review_periods_route():
+        """Get active review periods with employee counts"""
+        from models.score_card import ScoreCard
+        
+        # Get active review periods
+        active_periods = ReviewPeriod.query.filter_by(
+            is_active=True,
+            deleted_at=None
+        ).all()
+        
+        result = []
+        for period in active_periods:
+            # Count employees with score cards for this period
+            employee_count = ScoreCard.query.filter_by(
+                review_period_id=period.id,
+                deleted_at=None
+            ).count()
+            
+            result.append({
+                'id': period.id,
+                'name': period.period_name,
+                'startDate': period.start_date.strftime('%b %d, %Y') if period.start_date else '',
+                'endDate': period.end_date.strftime('%b %d, %Y') if period.end_date else '',
+                'status': period.status or 'Draft',
+                'employeeCount': employee_count
+            })
+        
+        return jsonify(result), 200
+
+    # Eligibility Profile Routes
+    @app.route('/api/eligibility-profiles', methods=['GET'])
+    @authenticate_token
+    @role_required('HR Admin')
+    def get_eligibility_profiles():
+        """Get all eligibility profiles with counts (HR Admin only)"""
+        from services.eligibility_service import get_all_profiles_with_counts, get_matching_employees
+        
+        # Get the logged-in user's employee_id to exclude them from counts
+        current_user_id = request.user.get('user_id') or request.user.get('id')
+        current_user = User.query.get(current_user_id)
+        excluded_employee_id = current_user.employee_id if current_user and current_user.employee_id else None
+        
+        # Get profiles with counts
+        profiles = get_all_profiles_with_counts()
+        
+        # Adjust counts to exclude the logged-in user
+        if excluded_employee_id:
+            for profile in profiles:
+                employee_ids = get_matching_employees(profile['id'])
+                if excluded_employee_id in employee_ids:
+                    profile['matching_employees'] -= 1
+        
+        return jsonify(profiles), 200
+
+    @app.route('/api/planning/generate-score-cards', methods=['POST'])
+    @authenticate_token
+    @role_required('HR Admin')
+    def generate_score_cards():
+        """
+        Generate score cards for selected eligibility profiles.
+        
+        Request body:
+        {
+            "review_period_id": 1,
+            "profile_ids": [1, 2, 3]
+        }
+        """
+        from services.eligibility_service import get_matching_employees
+        from services.score_card_service import bulk_create_score_cards
+        
+        data = request.get_json()
+        review_period_id = data.get('review_period_id')
+        profile_ids = data.get('profile_ids', [])
+        
+        if not review_period_id or not profile_ids:
+            return jsonify({'error': 'Missing required fields: review_period_id and profile_ids'}), 400
+        
+        # Collect all unique employee IDs
+        all_employee_ids = set()
+        for profile_id in profile_ids:
+            employee_ids = get_matching_employees(profile_id)
+            all_employee_ids.update(employee_ids)
+        
+        # Exclude the logged-in user's employee record
+        # HR Admin shouldn't create a performance review for themselves
+        current_user_id = request.user.get('user_id') or request.user.get('id')
+        current_user = User.query.get(current_user_id)
+        if current_user and current_user.employee_id:
+            all_employee_ids.discard(current_user.employee_id)
+            print(f"Excluded logged-in user's employee_id {current_user.employee_id} from score card generation")
+        
+        # Create score cards
+        created = bulk_create_score_cards(
+            review_period_id=review_period_id,
+            employee_ids=list(all_employee_ids),
+            created_by_user_id=current_user_id
+        )
+        
+        # Get employee details for response
+        employees_data = []
+        
+        # If new score cards were created, return those
+        if created:
+            for doc in created:
+                emp = doc.employee
+                employees_data.append({
+                    'id': emp.id,
+                    'name': emp.full_name,
+                    'department': emp.department.name if emp.department else 'N/A',
+                    'position': emp.position.title if emp.position else 'N/A',
+                    'score_card_id': doc.id
+                })
+        else:
+            # If no new ones created (already exist), get the existing ones
+            for employee_id in all_employee_ids:
+                existing_card = ScoreCard.query.filter_by(
+                    employee_id=employee_id,
+                    review_period_id=review_period_id,
+                    deleted_at=None
+                ).first()
+                if existing_card:
+                    emp = existing_card.employee
+                    employees_data.append({
+                        'id': emp.id,
+                        'name': emp.full_name,
+                        'department': emp.department.name if emp.department else 'N/A',
+                        'position': emp.position.title if emp.position else 'N/A',
+                        'score_card_id': existing_card.id
+                    })
+        
+        return jsonify({
+            'message': f'Created {len(created)} new score cards' if created else f'Score cards already exist for {len(employees_data)} employees',
+            'count': len(created) if created else len(employees_data),
+            'employees': employees_data,
+            'already_existed': len(created) == 0
+        }), 201
 
 
 def register_commands(app):

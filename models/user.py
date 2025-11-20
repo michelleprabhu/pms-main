@@ -20,7 +20,7 @@ class User(UserMixin, AuditMixin, db.Model):
     employee = db.relationship('Employee', back_populates='user', foreign_keys=[employee_id], uselist=False, lazy=True)
     owned_goals = db.relationship('Goal', foreign_keys='Goal.owner_id', back_populates='owner', lazy=True)
     owned_competencies = db.relationship('Competency', foreign_keys='Competency.owner_id', back_populates='owner', lazy=True)
-    owned_documents = db.relationship('PerformanceDocument', foreign_keys='PerformanceDocument.user_id', back_populates='user', lazy=True)
+    owned_score_cards = db.relationship('ScoreCard', foreign_keys='ScoreCard.user_id', back_populates='user', lazy=True)
     owned_evaluations = db.relationship('Evaluation', foreign_keys='Evaluation.user_id', back_populates='user', lazy=True)
     received_notifications = db.relationship('Notification', foreign_keys='Notification.recipient_id', back_populates='recipient', lazy=True)
     created_users = db.relationship('User', foreign_keys='User.created_by', remote_side=[id], lazy=True)

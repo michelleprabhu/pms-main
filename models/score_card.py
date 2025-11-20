@@ -1,14 +1,22 @@
 from extensions import db
 from datetime import datetime
+from sqlalchemy import UniqueConstraint
 
-class PerformanceDocument(db.Model):
-    __tablename__ = 'performance_documents'
+class ScoreCard(db.Model):
+    __tablename__ = 'score_cards'
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    title = db.Column(db.String(200), nullable=False)
-    content = db.Column(db.Text, nullable=False)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    status = db.Column(db.String(20), nullable=False, default='Draft')
+    
+    # Core fields for score cards
+    employee_id = db.Column(db.Integer, db.ForeignKey('employees.id'), nullable=False)
+    review_period_id = db.Column(db.Integer, db.ForeignKey('review_periods.id'), nullable=False)
+    status = db.Column(db.String(50), nullable=False, default='planning')
+    overall_rating = db.Column(db.Float, nullable=True)
+    
+    # Legacy fields (now nullable for backward compatibility)
+    title = db.Column(db.String(200), nullable=True)
+    content = db.Column(db.Text, nullable=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
     version = db.Column(db.Integer, default=1)
     published_date = db.Column(db.DateTime)
     
@@ -20,11 +28,18 @@ class PerformanceDocument(db.Model):
     deleted_at = db.Column(db.DateTime, nullable=True)
 
     # Relationships
-    user = db.relationship('User', foreign_keys=[user_id], back_populates='owned_documents')
-    evaluations = db.relationship('Evaluation', backref='document', lazy=True)
+    employee = db.relationship('Employee', backref='score_cards')
+    review_period = db.relationship('ReviewPeriod', backref='score_cards')
+    user = db.relationship('User', foreign_keys=[user_id], back_populates='owned_score_cards')
+    evaluations = db.relationship('Evaluation', backref='related_score_card', lazy=True)
 
     # Approval history as a JSON column
     approval_history = db.Column(db.JSON, default=[])
+    
+    # Unique constraint: one score card per employee per review period
+    __table_args__ = (
+        UniqueConstraint('employee_id', 'review_period_id', name='uq_employee_review_period'),
+    )
 
     @property
     def current_approval_status(self):
@@ -35,10 +50,13 @@ class PerformanceDocument(db.Model):
     def to_dict(self):
         return {
             'id': self.id,
+            'employee_id': self.employee_id,
+            'review_period_id': self.review_period_id,
+            'status': self.status,
+            'overall_rating': self.overall_rating,
             'title': self.title,
             'content': self.content,
             'user_id': self.user_id,
-            'status': self.status,
             'version': self.version,
             'published_date': self.published_date.isoformat() if self.published_date else None,
             'approval_status': self.current_approval_status,
@@ -48,3 +66,4 @@ class PerformanceDocument(db.Model):
             'updated_at': self.updated_at.isoformat() if self.updated_at else None,
             'deleted_at': self.deleted_at.isoformat() if self.deleted_at else None
         }
+
