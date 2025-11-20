@@ -1,0 +1,915 @@
+<div class="dashboard-container">
+  <!-- Sidebar -->
+  <aside class="sidebar" [class.collapsed]="isSidebarCollapsed">
+    <div class="sidebar-header">
+      <img *ngIf="!isSidebarCollapsed" src="assets/logo.png" alt="iDUELA" class="logo" />
+      <img *ngIf="isSidebarCollapsed" src="assets/logo.png" alt="iDUELA" class="logo-small" />
+    </div>
+    
+    <nav class="sidebar-nav">
+      <div class="nav-section">
+        <div class="section-title" *ngIf="!isSidebarCollapsed">Home</div>
+        <div class="nav-item" (click)="navigateToDashboard()">
+          <span class="nav-icon"><i class="fas fa-chart-line"></i></span>
+          <span class="nav-text" *ngIf="!isSidebarCollapsed">Dashboard</span>
+        </div>
+        <div class="nav-item" (click)="navigateToPlanning()">
+          <span class="nav-icon"><i class="fas fa-tasks"></i></span>
+          <span class="nav-text" *ngIf="!isSidebarCollapsed">Planning</span>
+        </div>
+        <div class="nav-item" (click)="navigateToScoreCards()">
+          <span class="nav-icon"><i class="fas fa-clipboard-check"></i></span>
+          <span class="nav-text" *ngIf="!isSidebarCollapsed">Score Cards</span>
+        </div>
+        <div class="nav-item" (click)="navigateToEvaluation()">
+          <span class="nav-icon"><i class="fas fa-star"></i></span>
+          <span class="nav-text" *ngIf="!isSidebarCollapsed">Evaluation</span>
+        </div>
+      </div>
+
+      <div class="nav-section">
+        <div class="section-title" *ngIf="!isSidebarCollapsed">Analytics</div>
+        <div class="nav-item" (click)="navigateToReports()">
+          <span class="nav-icon"><i class="fas fa-chart-bar"></i></span>
+          <span class="nav-text" *ngIf="!isSidebarCollapsed">Reports</span>
+        </div>
+      </div>
+
+      <div class="nav-section">
+        <div class="section-title" *ngIf="!isSidebarCollapsed">Settings</div>
+        <div class="nav-item" (click)="navigateToManagement()">
+          <span class="nav-icon"><i class="fas fa-cogs"></i></span>
+          <span class="nav-text" *ngIf="!isSidebarCollapsed">Management</span>
+        </div>
+        <div class="nav-item" (click)="navigateToReviewPeriod()">
+          <span class="nav-icon"><i class="fas fa-calendar-alt"></i></span>
+          <span class="nav-text" *ngIf="!isSidebarCollapsed">Review Periods</span>
+        </div>
+      </div>
+      
+      <div class="nav-spacer"></div>
+      
+      <div class="nav-item sign-out" (click)="signOut()">
+        <span class="nav-icon"><i class="fas fa-sign-out-alt"></i></span>
+        <span class="nav-text" *ngIf="!isSidebarCollapsed">Sign Out</span>
+      </div>
+    </nav>
+  </aside>
+
+  <!-- Main Content -->
+  <div class="main-content">
+    <!-- Top Bar -->
+    <header class="top-bar">
+      <button class="sidebar-toggle" (click)="toggleSidebar()">
+        <i class="fas fa-bars"></i>
+      </button>
+      <div class="page-name">Performance Management System</div>
+    </header>
+
+    <!-- Page Content -->
+    <div class="page-content">
+      <!-- Page Header -->
+      <div class="page-header">
+        <button class="btn-back" (click)="backToEmployees()">
+          <i class="fas fa-arrow-left"></i>
+          <span>Back to Employees</span>
+        </button>
+        <h1 class="page-title">{{ isEditMode ? 'Edit Employee' : 'Add Employee' }}</h1>
+      </div>
+
+      <!-- Employee Form -->
+      <form class="employee-form" (ngSubmit)="saveEmployee()">
+        
+        <!-- Section 1: Personal Information -->
+        <div class="form-section">
+          <h2 class="section-title">Personal Information</h2>
+          <div class="section-divider"></div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Employee ID</label>
+              <input type="text" class="form-control" [(ngModel)]="employeeForm.employeeId" name="employeeId" readonly />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Full Name <span class="required">*</span></label>
+              <input type="text" class="form-control" [(ngModel)]="employeeForm.fullName" name="fullName" placeholder="Enter full name" required />
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Date of Birth</label>
+              <input type="date" class="form-control" [(ngModel)]="employeeForm.dateOfBirth" name="dateOfBirth" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Gender</label>
+              <select class="form-control" [(ngModel)]="employeeForm.gender" name="gender">
+                <option value="">Select Gender</option>
+                <option *ngFor="let gender of genderOptions" [value]="gender">{{ gender }}</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Email <span class="required">*</span></label>
+              <input type="email" class="form-control" [(ngModel)]="employeeForm.email" name="email" placeholder="Enter email address" required />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Phone</label>
+              <input type="tel" class="form-control" [(ngModel)]="employeeForm.phone" name="phone" placeholder="Enter phone number" />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Address</label>
+            <textarea class="form-control" [(ngModel)]="employeeForm.address" name="address" rows="2" placeholder="Enter full address"></textarea>
+          </div>
+        </div>
+
+        <!-- Section 2: Employment Information -->
+        <div class="form-section">
+          <h2 class="section-title">Employment Information</h2>
+          <div class="section-divider"></div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Joining Date <span class="required">*</span></label>
+              <input type="date" class="form-control" [(ngModel)]="employeeForm.joiningDate" name="joiningDate" required />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Position <span class="required">*</span></label>
+              <select class="form-control" [(ngModel)]="employeeForm.position" name="position" required>
+                <option value="">Select Position</option>
+                <option *ngFor="let position of positionOptions" [value]="position">{{ position }}</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Department <span class="required">*</span></label>
+              <select class="form-control" [(ngModel)]="employeeForm.department" name="department" required>
+                <option value="">Select Department</option>
+                <option *ngFor="let dept of departmentOptions" [value]="dept">{{ dept }}</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Reporting Manager</label>
+              <select class="form-control" [(ngModel)]="employeeForm.reportingManager" name="reportingManager">
+                <option *ngFor="let manager of managerOptions" [value]="manager">{{ manager }}</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Employment Status <span class="required">*</span></label>
+              <select class="form-control" [(ngModel)]="employeeForm.employmentStatus" name="employmentStatus" required>
+                <option value="">Select Status</option>
+                <option *ngFor="let status of statusOptions" [value]="status">{{ status }}</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Salary Grade</label>
+              <select class="form-control" [(ngModel)]="employeeForm.salaryGrade" name="salaryGrade">
+                <option value="">Select Grade</option>
+                <option *ngFor="let grade of gradeOptions" [value]="grade">{{ grade }}</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section 3: Education & Qualifications -->
+        <div class="form-section">
+          <div class="section-header">
+            <h2 class="section-title">Education & Qualifications</h2>
+            <button type="button" class="btn-add-item" (click)="openAddEducationModal()">
+              <i class="fas fa-plus"></i>
+              <span>Add</span>
+            </button>
+          </div>
+          <div class="section-divider"></div>
+
+          <div class="sub-table-wrapper" *ngIf="educationList.length > 0">
+            <table class="sub-table">
+              <thead>
+                <tr>
+                  <th>Degree</th>
+                  <th>Institution</th>
+                  <th>Year</th>
+                  <th>Field of Study</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let education of educationList">
+                  <td>{{ education.degree }}</td>
+                  <td>{{ education.institution }}</td>
+                  <td>{{ education.year }}</td>
+                  <td>{{ education.fieldOfStudy }}</td>
+                  <td>
+                    <div class="action-buttons">
+                      <button type="button" class="btn-icon-small btn-edit" (click)="openEditEducationModal(education)">
+                        <i class="fas fa-pencil"></i>
+                      </button>
+                      <button type="button" class="btn-icon-small btn-delete" (click)="deleteEducation(education.id)">
+                        <i class="fas fa-trash"></i>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="empty-message" *ngIf="educationList.length === 0">No education records added yet. Click "Add" to add education details.</p>
+        </div>
+
+        <!-- Section 4: Certifications -->
+        <div class="form-section">
+          <div class="section-header">
+            <h2 class="section-title">Certifications</h2>
+            <button type="button" class="btn-add-item" (click)="openAddCertificationModal()">
+              <i class="fas fa-plus"></i>
+              <span>Add</span>
+            </button>
+          </div>
+          <div class="section-divider"></div>
+
+          <div class="sub-table-wrapper" *ngIf="certificationList.length > 0">
+            <table class="sub-table">
+              <thead>
+                <tr>
+                  <th>Certification Name</th>
+                  <th>Issuing Organization</th>
+                  <th>Issue Date</th>
+                  <th>Expiry Date</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let cert of certificationList">
+                  <td>{{ cert.name }}</td>
+                  <td>{{ cert.issuingOrg }}</td>
+                  <td>{{ cert.issueDate }}</td>
+                  <td>{{ cert.expiryDate || 'N/A' }}</td>
+                  <td>
+                    <div class="action-buttons">
+                      <button type="button" class="btn-icon-small btn-edit" (click)="openEditCertificationModal(cert)">
+                        <i class="fas fa-pencil"></i>
+                      </button>
+                      <button type="button" class="btn-icon-small btn-delete" (click)="deleteCertification(cert.id)">
+                        <i class="fas fa-trash"></i>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="empty-message" *ngIf="certificationList.length === 0">No certifications added yet. Click "Add" to add certification details.</p>
+        </div>
+
+        <!-- Section 5: Documents -->
+        <div class="form-section">
+          <div class="section-header">
+            <h2 class="section-title">Documents</h2>
+            <button type="button" class="btn-add-item" (click)="openAddDocumentModal()">
+              <i class="fas fa-plus"></i>
+              <span>Upload</span>
+            </button>
+          </div>
+          <div class="section-divider"></div>
+
+          <div class="sub-table-wrapper" *ngIf="documentList.length > 0">
+            <table class="sub-table">
+              <thead>
+                <tr>
+                  <th>Document Type</th>
+                  <th>File Name</th>
+                  <th>Upload Date</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let doc of documentList">
+                  <td>{{ doc.type }}</td>
+                  <td>{{ doc.fileName }}</td>
+                  <td>{{ doc.uploadDate }}</td>
+                  <td>
+                    <div class="action-buttons">
+                      <button type="button" class="btn-icon-small btn-view">
+                        <i class="fas fa-eye"></i>
+                      </button>
+                      <button type="button" class="btn-icon-small btn-delete" (click)="deleteDocument(doc.id)">
+                        <i class="fas fa-trash"></i>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="empty-message" *ngIf="documentList.length === 0">No documents uploaded yet. Click "Upload" to add documents.</p>
+        </div>
+
+        <!-- Section 6: System Access (Optional) -->
+        <div class="form-section">
+          <h2 class="section-title">System Access</h2>
+          <div class="section-divider"></div>
+
+          <div class="form-group">
+            <label class="form-label">Linked User Account</label>
+            <select class="form-control" [(ngModel)]="employeeForm.linkedUser" name="linkedUser">
+              <option value="">None</option>
+              <option value="user1">user1@company.com</option>
+              <option value="user2">user2@company.com</option>
+            </select>
+            <small class="form-help">Link this employee to an existing user account for system access</small>
+          </div>
+        </div>
+
+        <!-- Form Actions -->
+        <div class="form-actions">
+          <button type="button" class="btn-cancel" (click)="cancel()">Cancel</button>
+          <button type="submit" class="btn-save">Save Employee</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Education Modal -->
+<div class="modal-overlay" *ngIf="showEducationModal" (click)="closeEducationModal()">
+  <div class="modal-container" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2 class="modal-title">{{ editingEducationId ? 'Edit Education' : 'Add Education' }}</h2>
+      <button class="btn-close" type="button" (click)="closeEducationModal()">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    <div class="modal-body">
+      <form (ngSubmit)="saveEducation()">
+        <div class="form-group">
+          <label class="form-label">Degree Name <span class="required">*</span></label>
+          <input type="text" class="form-control" [(ngModel)]="educationForm.degree" name="degree" placeholder="e.g., Bachelor of Science" required />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Institution <span class="required">*</span></label>
+          <input type="text" class="form-control" [(ngModel)]="educationForm.institution" name="institution" placeholder="e.g., University Name" required />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Year of Completion <span class="required">*</span></label>
+          <input type="number" class="form-control" [(ngModel)]="educationForm.year" name="year" placeholder="e.g., 2020" required />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Field of Study</label>
+          <input type="text" class="form-control" [(ngModel)]="educationForm.fieldOfStudy" name="fieldOfStudy" placeholder="e.g., Computer Science" />
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-cancel" (click)="closeEducationModal()">Cancel</button>
+          <button type="submit" class="btn-save">{{ editingEducationId ? 'Update' : 'Add' }}</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Certification Modal -->
+<div class="modal-overlay" *ngIf="showCertificationModal" (click)="closeCertificationModal()">
+  <div class="modal-container" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2 class="modal-title">{{ editingCertificationId ? 'Edit Certification' : 'Add Certification' }}</h2>
+      <button class="btn-close" type="button" (click)="closeCertificationModal()">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    <div class="modal-body">
+      <form (ngSubmit)="saveCertification()">
+        <div class="form-group">
+          <label class="form-label">Certification Name <span class="required">*</span></label>
+          <input type="text" class="form-control" [(ngModel)]="certificationForm.name" name="certName" placeholder="e.g., PMP" required />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Issuing Organization <span class="required">*</span></label>
+          <input type="text" class="form-control" [(ngModel)]="certificationForm.issuingOrg" name="issuingOrg" placeholder="e.g., PMI" required />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Issue Date <span class="required">*</span></label>
+          <input type="date" class="form-control" [(ngModel)]="certificationForm.issueDate" name="issueDate" required />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Expiry Date</label>
+          <input type="date" class="form-control" [(ngModel)]="certificationForm.expiryDate" name="expiryDate" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Certification ID</label>
+          <input type="text" class="form-control" [(ngModel)]="certificationForm.certificationId" name="certId" placeholder="e.g., CERT-12345" />
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-cancel" (click)="closeCertificationModal()">Cancel</button>
+          <button type="submit" class="btn-save">{{ editingCertificationId ? 'Update' : 'Add' }}</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Document Modal -->
+<div class="modal-overlay" *ngIf="showDocumentModal" (click)="closeDocumentModal()">
+  <div class="modal-container" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2 class="modal-title">{{ editingDocumentId ? 'Edit Document' : 'Upload Document' }}</h2>
+      <button class="btn-close" type="button" (click)="closeDocumentModal()">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    <div class="modal-body">
+      <form (ngSubmit)="saveDocument()">
+        <div class="form-group">
+          <label class="form-label">Document Type <span class="required">*</span></label>
+          <select class="form-control" [(ngModel)]="documentForm.type" name="docType" required>
+            <option value="">Select Type</option>
+            <option *ngFor="let type of documentTypeOptions" [value]="type">{{ type }}</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Choose File <span class="required">*</span></label>
+          <input type="file" class="form-control-file" (change)="onFileSelect($event)" name="file" />
+          <small class="form-help" *ngIf="documentForm.fileName">Selected: {{ documentForm.fileName }}</small>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Description</label>
+          <textarea class="form-control" [(ngModel)]="documentForm.description" name="description" rows="2" placeholder="Enter document description"></textarea>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-cancel" (click)="closeDocumentModal()">Cancel</button>
+          <button type="submit" class="btn-save">{{ editingDocumentId ? 'Update' : 'Upload' }}</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  <!-- Sidebar -->
+  <aside class="sidebar" [class.collapsed]="isSidebarCollapsed">
+    <div class="sidebar-header">
+      <img *ngIf="!isSidebarCollapsed" src="assets/logo.png" alt="iDUELA" class="logo" />
+      <img *ngIf="isSidebarCollapsed" src="assets/logo.png" alt="iDUELA" class="logo-small" />
+    </div>
+    
+    <nav class="sidebar-nav">
+      <div class="nav-section">
+        <div class="section-title" *ngIf="!isSidebarCollapsed">Home</div>
+        <div class="nav-item" (click)="navigateToDashboard()">
+          <span class="nav-icon"><i class="fas fa-chart-line"></i></span>
+          <span class="nav-text" *ngIf="!isSidebarCollapsed">Dashboard</span>
+        </div>
+        <div class="nav-item" (click)="navigateToPlanning()">
+          <span class="nav-icon"><i class="fas fa-tasks"></i></span>
+          <span class="nav-text" *ngIf="!isSidebarCollapsed">Planning</span>
+        </div>
+        <div class="nav-item" (click)="navigateToScoreCards()">
+          <span class="nav-icon"><i class="fas fa-clipboard-check"></i></span>
+          <span class="nav-text" *ngIf="!isSidebarCollapsed">Score Cards</span>
+        </div>
+        <div class="nav-item" (click)="navigateToEvaluation()">
+          <span class="nav-icon"><i class="fas fa-star"></i></span>
+          <span class="nav-text" *ngIf="!isSidebarCollapsed">Evaluation</span>
+        </div>
+      </div>
+
+      <div class="nav-section">
+        <div class="section-title" *ngIf="!isSidebarCollapsed">Analytics</div>
+        <div class="nav-item" (click)="navigateToReports()">
+          <span class="nav-icon"><i class="fas fa-chart-bar"></i></span>
+          <span class="nav-text" *ngIf="!isSidebarCollapsed">Reports</span>
+        </div>
+      </div>
+
+      <div class="nav-section">
+        <div class="section-title" *ngIf="!isSidebarCollapsed">Settings</div>
+        <div class="nav-item" (click)="navigateToManagement()">
+          <span class="nav-icon"><i class="fas fa-cogs"></i></span>
+          <span class="nav-text" *ngIf="!isSidebarCollapsed">Management</span>
+        </div>
+        <div class="nav-item" (click)="navigateToReviewPeriod()">
+          <span class="nav-icon"><i class="fas fa-calendar-alt"></i></span>
+          <span class="nav-text" *ngIf="!isSidebarCollapsed">Review Periods</span>
+        </div>
+      </div>
+      
+      <div class="nav-spacer"></div>
+      
+      <div class="nav-item sign-out" (click)="signOut()">
+        <span class="nav-icon"><i class="fas fa-sign-out-alt"></i></span>
+        <span class="nav-text" *ngIf="!isSidebarCollapsed">Sign Out</span>
+      </div>
+    </nav>
+  </aside>
+
+  <!-- Main Content -->
+  <div class="main-content">
+    <!-- Top Bar -->
+    <header class="top-bar">
+      <button class="sidebar-toggle" (click)="toggleSidebar()">
+        <i class="fas fa-bars"></i>
+      </button>
+      <div class="page-name">Performance Management System</div>
+    </header>
+
+    <!-- Page Content -->
+    <div class="page-content">
+      <!-- Page Header -->
+      <div class="page-header">
+        <button class="btn-back" (click)="backToEmployees()">
+          <i class="fas fa-arrow-left"></i>
+          <span>Back to Employees</span>
+        </button>
+        <h1 class="page-title">{{ isEditMode ? 'Edit Employee' : 'Add Employee' }}</h1>
+      </div>
+
+      <!-- Employee Form -->
+      <form class="employee-form" (ngSubmit)="saveEmployee()">
+        
+        <!-- Section 1: Personal Information -->
+        <div class="form-section">
+          <h2 class="section-title">Personal Information</h2>
+          <div class="section-divider"></div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Employee ID</label>
+              <input type="text" class="form-control" [(ngModel)]="employeeForm.employeeId" name="employeeId" readonly />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Full Name <span class="required">*</span></label>
+              <input type="text" class="form-control" [(ngModel)]="employeeForm.fullName" name="fullName" placeholder="Enter full name" required />
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Date of Birth</label>
+              <input type="date" class="form-control" [(ngModel)]="employeeForm.dateOfBirth" name="dateOfBirth" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Gender</label>
+              <select class="form-control" [(ngModel)]="employeeForm.gender" name="gender">
+                <option value="">Select Gender</option>
+                <option *ngFor="let gender of genderOptions" [value]="gender">{{ gender }}</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Email <span class="required">*</span></label>
+              <input type="email" class="form-control" [(ngModel)]="employeeForm.email" name="email" placeholder="Enter email address" required />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Phone</label>
+              <input type="tel" class="form-control" [(ngModel)]="employeeForm.phone" name="phone" placeholder="Enter phone number" />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Address</label>
+            <textarea class="form-control" [(ngModel)]="employeeForm.address" name="address" rows="2" placeholder="Enter full address"></textarea>
+          </div>
+        </div>
+
+        <!-- Section 2: Employment Information -->
+        <div class="form-section">
+          <h2 class="section-title">Employment Information</h2>
+          <div class="section-divider"></div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Joining Date <span class="required">*</span></label>
+              <input type="date" class="form-control" [(ngModel)]="employeeForm.joiningDate" name="joiningDate" required />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Position <span class="required">*</span></label>
+              <select class="form-control" [(ngModel)]="employeeForm.position" name="position" required>
+                <option value="">Select Position</option>
+                <option *ngFor="let position of positionOptions" [value]="position">{{ position }}</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Department <span class="required">*</span></label>
+              <select class="form-control" [(ngModel)]="employeeForm.department" name="department" required>
+                <option value="">Select Department</option>
+                <option *ngFor="let dept of departmentOptions" [value]="dept">{{ dept }}</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Reporting Manager</label>
+              <select class="form-control" [(ngModel)]="employeeForm.reportingManager" name="reportingManager">
+                <option *ngFor="let manager of managerOptions" [value]="manager">{{ manager }}</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Employment Status <span class="required">*</span></label>
+              <select class="form-control" [(ngModel)]="employeeForm.employmentStatus" name="employmentStatus" required>
+                <option value="">Select Status</option>
+                <option *ngFor="let status of statusOptions" [value]="status">{{ status }}</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Salary Grade</label>
+              <select class="form-control" [(ngModel)]="employeeForm.salaryGrade" name="salaryGrade">
+                <option value="">Select Grade</option>
+                <option *ngFor="let grade of gradeOptions" [value]="grade">{{ grade }}</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section 3: Education & Qualifications -->
+        <div class="form-section">
+          <div class="section-header">
+            <h2 class="section-title">Education & Qualifications</h2>
+            <button type="button" class="btn-add-item" (click)="openAddEducationModal()">
+              <i class="fas fa-plus"></i>
+              <span>Add</span>
+            </button>
+          </div>
+          <div class="section-divider"></div>
+
+          <div class="sub-table-wrapper" *ngIf="educationList.length > 0">
+            <table class="sub-table">
+              <thead>
+                <tr>
+                  <th>Degree</th>
+                  <th>Institution</th>
+                  <th>Year</th>
+                  <th>Field of Study</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let education of educationList">
+                  <td>{{ education.degree }}</td>
+                  <td>{{ education.institution }}</td>
+                  <td>{{ education.year }}</td>
+                  <td>{{ education.fieldOfStudy }}</td>
+                  <td>
+                    <div class="action-buttons">
+                      <button type="button" class="btn-icon-small btn-edit" (click)="openEditEducationModal(education)">
+                        <i class="fas fa-pencil"></i>
+                      </button>
+                      <button type="button" class="btn-icon-small btn-delete" (click)="deleteEducation(education.id)">
+                        <i class="fas fa-trash"></i>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="empty-message" *ngIf="educationList.length === 0">No education records added yet. Click "Add" to add education details.</p>
+        </div>
+
+        <!-- Section 4: Certifications -->
+        <div class="form-section">
+          <div class="section-header">
+            <h2 class="section-title">Certifications</h2>
+            <button type="button" class="btn-add-item" (click)="openAddCertificationModal()">
+              <i class="fas fa-plus"></i>
+              <span>Add</span>
+            </button>
+          </div>
+          <div class="section-divider"></div>
+
+          <div class="sub-table-wrapper" *ngIf="certificationList.length > 0">
+            <table class="sub-table">
+              <thead>
+                <tr>
+                  <th>Certification Name</th>
+                  <th>Issuing Organization</th>
+                  <th>Issue Date</th>
+                  <th>Expiry Date</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let cert of certificationList">
+                  <td>{{ cert.name }}</td>
+                  <td>{{ cert.issuingOrg }}</td>
+                  <td>{{ cert.issueDate }}</td>
+                  <td>{{ cert.expiryDate || 'N/A' }}</td>
+                  <td>
+                    <div class="action-buttons">
+                      <button type="button" class="btn-icon-small btn-edit" (click)="openEditCertificationModal(cert)">
+                        <i class="fas fa-pencil"></i>
+                      </button>
+                      <button type="button" class="btn-icon-small btn-delete" (click)="deleteCertification(cert.id)">
+                        <i class="fas fa-trash"></i>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="empty-message" *ngIf="certificationList.length === 0">No certifications added yet. Click "Add" to add certification details.</p>
+        </div>
+
+        <!-- Section 5: Documents -->
+        <div class="form-section">
+          <div class="section-header">
+            <h2 class="section-title">Documents</h2>
+            <button type="button" class="btn-add-item" (click)="openAddDocumentModal()">
+              <i class="fas fa-plus"></i>
+              <span>Upload</span>
+            </button>
+          </div>
+          <div class="section-divider"></div>
+
+          <div class="sub-table-wrapper" *ngIf="documentList.length > 0">
+            <table class="sub-table">
+              <thead>
+                <tr>
+                  <th>Document Type</th>
+                  <th>File Name</th>
+                  <th>Upload Date</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let doc of documentList">
+                  <td>{{ doc.type }}</td>
+                  <td>{{ doc.fileName }}</td>
+                  <td>{{ doc.uploadDate }}</td>
+                  <td>
+                    <div class="action-buttons">
+                      <button type="button" class="btn-icon-small btn-view">
+                        <i class="fas fa-eye"></i>
+                      </button>
+                      <button type="button" class="btn-icon-small btn-delete" (click)="deleteDocument(doc.id)">
+                        <i class="fas fa-trash"></i>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="empty-message" *ngIf="documentList.length === 0">No documents uploaded yet. Click "Upload" to add documents.</p>
+        </div>
+
+        <!-- Section 6: System Access (Optional) -->
+        <div class="form-section">
+          <h2 class="section-title">System Access</h2>
+          <div class="section-divider"></div>
+
+          <div class="form-group">
+            <label class="form-label">Linked User Account</label>
+            <select class="form-control" [(ngModel)]="employeeForm.linkedUser" name="linkedUser">
+              <option value="">None</option>
+              <option value="user1">user1@company.com</option>
+              <option value="user2">user2@company.com</option>
+            </select>
+            <small class="form-help">Link this employee to an existing user account for system access</small>
+          </div>
+        </div>
+
+        <!-- Form Actions -->
+        <div class="form-actions">
+          <button type="button" class="btn-cancel" (click)="cancel()">Cancel</button>
+          <button type="submit" class="btn-save">Save Employee</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+<!-- Education Modal -->
+<div class="modal-overlay" *ngIf="showEducationModal" (click)="closeEducationModal()">
+  <div class="modal-container" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2 class="modal-title">{{ editingEducationId ? 'Edit Education' : 'Add Education' }}</h2>
+      <button class="btn-close" type="button" (click)="closeEducationModal()">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    <div class="modal-body">
+      <form (ngSubmit)="saveEducation()">
+        <div class="form-group">
+          <label class="form-label">Degree Name <span class="required">*</span></label>
+          <input type="text" class="form-control" [(ngModel)]="educationForm.degree" name="degree" placeholder="e.g., Bachelor of Science" required />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Institution <span class="required">*</span></label>
+          <input type="text" class="form-control" [(ngModel)]="educationForm.institution" name="institution" placeholder="e.g., University Name" required />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Year of Completion <span class="required">*</span></label>
+          <input type="number" class="form-control" [(ngModel)]="educationForm.year" name="year" placeholder="e.g., 2020" required />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Field of Study</label>
+          <input type="text" class="form-control" [(ngModel)]="educationForm.fieldOfStudy" name="fieldOfStudy" placeholder="e.g., Computer Science" />
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-cancel" (click)="closeEducationModal()">Cancel</button>
+          <button type="submit" class="btn-save">{{ editingEducationId ? 'Update' : 'Add' }}</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Certification Modal -->
+<div class="modal-overlay" *ngIf="showCertificationModal" (click)="closeCertificationModal()">
+  <div class="modal-container" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2 class="modal-title">{{ editingCertificationId ? 'Edit Certification' : 'Add Certification' }}</h2>
+      <button class="btn-close" type="button" (click)="closeCertificationModal()">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    <div class="modal-body">
+      <form (ngSubmit)="saveCertification()">
+        <div class="form-group">
+          <label class="form-label">Certification Name <span class="required">*</span></label>
+          <input type="text" class="form-control" [(ngModel)]="certificationForm.name" name="certName" placeholder="e.g., PMP" required />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Issuing Organization <span class="required">*</span></label>
+          <input type="text" class="form-control" [(ngModel)]="certificationForm.issuingOrg" name="issuingOrg" placeholder="e.g., PMI" required />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Issue Date <span class="required">*</span></label>
+          <input type="date" class="form-control" [(ngModel)]="certificationForm.issueDate" name="issueDate" required />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Expiry Date</label>
+          <input type="date" class="form-control" [(ngModel)]="certificationForm.expiryDate" name="expiryDate" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Certification ID</label>
+          <input type="text" class="form-control" [(ngModel)]="certificationForm.certificationId" name="certId" placeholder="e.g., CERT-12345" />
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-cancel" (click)="closeCertificationModal()">Cancel</button>
+          <button type="submit" class="btn-save">{{ editingCertificationId ? 'Update' : 'Add' }}</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Document Modal -->
+<div class="modal-overlay" *ngIf="showDocumentModal" (click)="closeDocumentModal()">
+  <div class="modal-container" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2 class="modal-title">{{ editingDocumentId ? 'Edit Document' : 'Upload Document' }}</h2>
+      <button class="btn-close" type="button" (click)="closeDocumentModal()">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    <div class="modal-body">
+      <form (ngSubmit)="saveDocument()">
+        <div class="form-group">
+          <label class="form-label">Document Type <span class="required">*</span></label>
+          <select class="form-control" [(ngModel)]="documentForm.type" name="docType" required>
+            <option value="">Select Type</option>
+            <option *ngFor="let type of documentTypeOptions" [value]="type">{{ type }}</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Choose File <span class="required">*</span></label>
+          <input type="file" class="form-control-file" (change)="onFileSelect($event)" name="file" />
+          <small class="form-help" *ngIf="documentForm.fileName">Selected: {{ documentForm.fileName }}</small>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Description</label>
+          <textarea class="form-control" [(ngModel)]="documentForm.description" name="description" rows="2" placeholder="Enter document description"></textarea>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-cancel" (click)="closeDocumentModal()">Cancel</button>
+          <button type="submit" class="btn-save">{{ editingDocumentId ? 'Update' : 'Upload' }}</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+
+
+
+
+
+
+
+

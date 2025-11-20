@@ -29,6 +29,10 @@
 
       <div class="nav-section">
         <div class="section-title" *ngIf="!isSidebarCollapsed">Settings</div>
+        <div class="nav-item" (click)="navigateToManagement()">
+          <span class="nav-icon"><i class="fas fa-cogs"></i></span>
+          <span class="nav-text" *ngIf="!isSidebarCollapsed">Management</span>
+        </div>
         <div class="nav-item" (click)="navigateToReviewPeriod()">
           <span class="nav-icon"><i class="fas fa-calendar-alt"></i></span>
           <span class="nav-text" *ngIf="!isSidebarCollapsed">Review Periods</span>

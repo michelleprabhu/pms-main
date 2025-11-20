@@ -3,12 +3,13 @@ import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 
 @Component({
-  selector: 'app-hr-dashboard',
+  selector: 'app-hr-management',
+  standalone: true,
   imports: [CommonModule],
-  templateUrl: './hr-dashboard.html',
-  styleUrl: './hr-dashboard.css',
+  templateUrl: './hr-management.html',
+  styleUrls: ['./hr-management.css']
 })
-export class HrDashboard {
+export class HrManagementComponent {
   isSidebarCollapsed = false;
 
   constructor(private router: Router) {}
@@ -17,8 +18,8 @@ export class HrDashboard {
     this.isSidebarCollapsed = !this.isSidebarCollapsed;
   }
 
-  navigateToReviewPeriod() {
-    this.router.navigate(['/review-period']);
+  navigateToDashboard() {
+    this.router.navigate(['/hr-dashboard']);
   }
 
   navigateToPlanning() {
@@ -33,8 +34,28 @@ export class HrDashboard {
     this.router.navigate(['/evaluation-periods']);
   }
 
+  navigateToReports() {
+    this.router.navigate(['/hr-reports']);
+  }
+
   navigateToManagement() {
     this.router.navigate(['/hr-management']);
+  }
+
+  navigateToReviewPeriod() {
+    this.router.navigate(['/review-period']);
+  }
+
+  navigateToEmployees() {
+    this.router.navigate(['/hr-employees']);
+  }
+
+  navigateToDepartments() {
+    this.router.navigate(['/hr-departments']);
+  }
+
+  navigateToPositions() {
+    this.router.navigate(['/hr-positions']);
   }
 
   signOut() {
@@ -43,3 +64,13 @@ export class HrDashboard {
     this.router.navigate(['/login']);
   }
 }
+
+
+
+
+
+
+
+
+
+

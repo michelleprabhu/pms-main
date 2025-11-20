@@ -1,0 +1,155 @@
+<div class="dashboard-container">
+  <!-- Sidebar -->
+  <aside class="sidebar" [class.collapsed]="isSidebarCollapsed">
+    <div class="sidebar-header">
+      <img *ngIf="!isSidebarCollapsed" src="assets/logo.png" alt="iDUELA" class="logo" />
+      <img *ngIf="isSidebarCollapsed" src="assets/logo.png" alt="iDUELA" class="logo-small" />
+    </div>
+    
+    <nav class="sidebar-nav">
+      <div class="nav-section">
+        <div class="section-title" *ngIf="!isSidebarCollapsed">Home</div>
+        <div class="nav-item" (click)="navigateToDashboard()">
+          <span class="nav-icon"><i class="fas fa-chart-line"></i></span>
+          <span class="nav-text" *ngIf="!isSidebarCollapsed">Dashboard</span>
+        </div>
+        <div class="nav-item" (click)="navigateToPlanning()">
+          <span class="nav-icon"><i class="fas fa-tasks"></i></span>
+          <span class="nav-text" *ngIf="!isSidebarCollapsed">Planning</span>
+        </div>
+        <div class="nav-item" (click)="navigateToScoreCards()">
+          <span class="nav-icon"><i class="fas fa-clipboard-check"></i></span>
+          <span class="nav-text" *ngIf="!isSidebarCollapsed">Score Cards</span>
+        </div>
+        <div class="nav-item" (click)="navigateToEvaluation()">
+          <span class="nav-icon"><i class="fas fa-star"></i></span>
+          <span class="nav-text" *ngIf="!isSidebarCollapsed">Evaluation</span>
+        </div>
+      </div>
+
+      <div class="nav-section">
+        <div class="section-title" *ngIf="!isSidebarCollapsed">Analytics</div>
+        <div class="nav-item" (click)="navigateToReports()">
+          <span class="nav-icon"><i class="fas fa-chart-bar"></i></span>
+          <span class="nav-text" *ngIf="!isSidebarCollapsed">Reports</span>
+        </div>
+      </div>
+
+      <div class="nav-section">
+        <div class="section-title" *ngIf="!isSidebarCollapsed">Settings</div>
+        <div class="nav-item" (click)="navigateToManagement()">
+          <span class="nav-icon"><i class="fas fa-cogs"></i></span>
+          <span class="nav-text" *ngIf="!isSidebarCollapsed">Management</span>
+        </div>
+        <div class="nav-item" (click)="navigateToReviewPeriod()">
+          <span class="nav-icon"><i class="fas fa-calendar-alt"></i></span>
+          <span class="nav-text" *ngIf="!isSidebarCollapsed">Review Periods</span>
+        </div>
+      </div>
+      
+      <div class="nav-spacer"></div>
+      
+      <div class="nav-item sign-out" (click)="signOut()">
+        <span class="nav-icon"><i class="fas fa-sign-out-alt"></i></span>
+        <span class="nav-text" *ngIf="!isSidebarCollapsed">Sign Out</span>
+      </div>
+    </nav>
+  </aside>
+
+  <!-- Main Content -->
+  <div class="main-content">
+    <!-- Top Bar -->
+    <header class="top-bar">
+      <button class="sidebar-toggle" (click)="toggleSidebar()">
+        <i class="fas fa-bars"></i>
+      </button>
+      <div class="page-name">Performance Management System</div>
+    </header>
+
+    <!-- Page Content -->
+    <div class="page-content">
+      <!-- Page Header -->
+      <div class="page-header">
+        <div class="header-left">
+          <button class="btn-back" (click)="navigateToManagement()">
+            <i class="fas fa-arrow-left"></i>
+            <span>Back to Management</span>
+          </button>
+          <h1 class="page-title">Employee Management</h1>
+        </div>
+        <button class="btn-add" (click)="addEmployee()">
+          <i class="fas fa-plus"></i>
+          <span>Add Employee</span>
+        </button>
+      </div>
+
+      <!-- Tabs -->
+      <div class="tabs-container">
+        <button 
+          class="tab-button" 
+          [class.active]="activeTab === 'all'" 
+          (click)="setTab('all')">
+          All Employees
+        </button>
+        <button 
+          class="tab-button" 
+          [class.active]="activeTab === 'active'" 
+          (click)="setTab('active')">
+          Active
+        </button>
+        <button 
+          class="tab-button" 
+          [class.active]="activeTab === 'inactive'" 
+          (click)="setTab('inactive')">
+          Inactive
+        </button>
+      </div>
+
+      <!-- Employee Table -->
+      <div class="table-card">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Employee ID</th>
+              <th>Full Name</th>
+              <th>Position</th>
+              <th>Department</th>
+              <th>Manager</th>
+              <th>Joining Date</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let employee of filteredEmployees">
+              <td>{{ employee.id }}</td>
+              <td>{{ employee.fullName }}</td>
+              <td>{{ employee.position }}</td>
+              <td>{{ employee.department }}</td>
+              <td>{{ employee.manager || 'None' }}</td>
+              <td>{{ employee.joiningDate }}</td>
+              <td>
+                <span class="status-badge" [class.status-active]="employee.status === 'Active'" [class.status-inactive]="employee.status === 'Inactive'">
+                  {{ employee.status }}
+                </span>
+              </td>
+              <td>
+                <div class="action-buttons">
+                  <button class="btn-icon btn-view" (click)="viewEmployee(employee.id)" title="View">
+                    <i class="fas fa-eye"></i>
+                  </button>
+                  <button class="btn-icon btn-edit" (click)="editEmployee(employee.id)" title="Edit">
+                    <i class="fas fa-pencil"></i>
+                  </button>
+                  <button class="btn-icon btn-delete" (click)="deleteEmployee(employee.id)" title="Delete">
+                    <i class="fas fa-trash"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>

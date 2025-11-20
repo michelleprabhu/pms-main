@@ -31,6 +31,13 @@ import { ManagerScoreCardEmployeeDetailComponent } from './manager-score-card-em
 import { ManagerMyProfileComponent } from './manager-my-profile/manager-my-profile';
 import { ManagerSelfEvaluationComponent } from './manager-self-evaluation/manager-self-evaluation';
 import { ManagerSelfEvaluationDetailsComponent } from './manager-self-evaluation-details/manager-self-evaluation-details';
+import { HrManagementComponent } from './hr-management/hr-management';
+import { HrEmployeesComponent } from './hr-employees/hr-employees';
+import { HrEmployeeFormComponent } from './hr-employee-form/hr-employee-form';
+import { HrEmployeeViewComponent } from './hr-employee-view/hr-employee-view';
+import { HrDepartmentsComponent } from './hr-departments/hr-departments';
+import { HrPositionsComponent } from './hr-positions/hr-positions';
+import { HrReportsComponent } from './hr-reports/hr-reports';
 
 export const routes: Routes = [
   { path: '', redirectTo: '/login', pathMatch: 'full' },
@@ -66,6 +73,14 @@ export const routes: Routes = [
   { path: 'employee-self-evaluation-details', component: EmployeeSelfEvaluationDetailsComponent },
   { path: 'employee-ratings', component: EmployeeRatingsComponent },
   { path: 'employee-ratings-details', component: EmployeeRatingsDetailsComponent },
+  { path: 'hr-management', component: HrManagementComponent },
+  { path: 'hr-employees', component: HrEmployeesComponent },
+  { path: 'hr-employees/add', component: HrEmployeeFormComponent },
+  { path: 'hr-employees/edit/:id', component: HrEmployeeFormComponent },
+  { path: 'hr-employees/view/:id', component: HrEmployeeViewComponent },
+  { path: 'hr-departments', component: HrDepartmentsComponent },
+  { path: 'hr-positions', component: HrPositionsComponent },
+  { path: 'hr-reports', component: HrReportsComponent },
   { path: '**', redirectTo: '/login' }
 ];
 
