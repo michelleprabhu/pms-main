@@ -77,6 +77,27 @@
               View Team Members <i class="fas fa-arrow-right"></i>
             </button>
           </div>
+
+          <!-- My Self Evaluation -->
+          <div class="period-card" (click)="navigateToSelfEvaluation()">
+            <div class="period-header">
+              <h3 class="period-name">My Self Evaluation</h3>
+              <span class="status-badge active">Active</span>
+            </div>
+            <div class="period-dates">
+              <i class="fas fa-calendar"></i>
+              <span>Jan 1, 2025 - Mar 31, 2025</span>
+            </div>
+            <div class="period-stats">
+              <div class="stat-item">
+                <i class="fas fa-edit"></i>
+                <span class="stat-text">Self Evaluation</span>
+              </div>
+            </div>
+            <button class="btn-view-employees" (click)="navigateToSelfEvaluation()">
+              Continue to Self Evaluation <i class="fas fa-arrow-right"></i>
+            </button>
+          </div>
         </div>
       </div>
 

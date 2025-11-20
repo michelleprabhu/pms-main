@@ -58,4 +58,8 @@ export class ManagerScoreCardsComponent {
   viewScoreCardsByPeriod(periodId: number) {
     this.router.navigate(['/manager-score-cards/list'], { queryParams: { periodId: periodId } });
   }
+
+  navigateToMyProfile() {
+    this.router.navigate(['/manager-my-profile']);
+  }
 }

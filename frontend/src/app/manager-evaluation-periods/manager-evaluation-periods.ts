@@ -64,5 +64,9 @@ export class ManagerEvaluationPeriodsComponent {
     localStorage.removeItem('user');
     this.router.navigate(['/login']);
   }
+
+  navigateToSelfEvaluation() {
+    this.router.navigate(['/manager-self-evaluation-details']);
+  }
 }
 
