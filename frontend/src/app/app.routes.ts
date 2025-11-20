@@ -28,6 +28,9 @@ import { ScoreCardsListComponent } from './score-cards-list/score-cards-list';
 import { ScoreCardEmployeeDetailComponent } from './score-card-employee-detail/score-card-employee-detail';
 import { ManagerScoreCardsListComponent } from './manager-score-cards-list/manager-score-cards-list';
 import { ManagerScoreCardEmployeeDetailComponent } from './manager-score-card-employee-detail/manager-score-card-employee-detail';
+import { ManagerMyProfileComponent } from './manager-my-profile/manager-my-profile';
+import { ManagerSelfEvaluationComponent } from './manager-self-evaluation/manager-self-evaluation';
+import { ManagerSelfEvaluationDetailsComponent } from './manager-self-evaluation-details/manager-self-evaluation-details';
 
 export const routes: Routes = [
   { path: '', redirectTo: '/login', pathMatch: 'full' },
@@ -52,6 +55,9 @@ export const routes: Routes = [
   { path: 'manager-evaluation-periods', component: ManagerEvaluationPeriodsComponent },
   { path: 'manager-evaluation', component: ManagerEvaluationComponent },
   { path: 'manager-evaluation-details', component: ManagerEvaluationDetailsComponent },
+  { path: 'manager-my-profile', component: ManagerMyProfileComponent },
+  { path: 'manager-self-evaluation', component: ManagerSelfEvaluationComponent },
+  { path: 'manager-self-evaluation-details', component: ManagerSelfEvaluationDetailsComponent },
   { path: 'employee-dashboard', component: EmployeeDashboard },
   { path: 'employee-score-cards', component: EmployeeScoreCardsComponent },
   { path: 'employee-my-profile', component: EmployeeMyProfileComponent },
