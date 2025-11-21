@@ -74,3 +74,5 @@ def get_user_admin_role_id() -> Optional[int]:
     """Convenience method: Get User Admin role_id"""
     return get_role_id_by_name('User Admin')
 
+
+

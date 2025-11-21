@@ -1,6 +1,7 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
+import { PermissionService } from '../../services/permission.service';
 
 @Component({
   selector: 'app-employee-dashboard',
@@ -12,7 +13,10 @@ export class EmployeeDashboard {
   isSidebarCollapsed = false;
   employeeName = 'Sarah Johnson';
 
-  constructor(private router: Router) {}
+  constructor(
+    private router: Router,
+    public permissionService: PermissionService
+  ) {}
 
   toggleSidebar() {
     this.isSidebarCollapsed = !this.isSidebarCollapsed;

@@ -4,6 +4,7 @@ import { FormBuilder, FormGroup, ReactiveFormsModule, Validators, AbstractContro
 import { Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { ReviewPeriodService } from '../../services/review-period.service';
+import { PermissionService } from '../../services/permission.service';
 
 @Component({
   selector: 'app-review-period',
@@ -16,6 +17,7 @@ export class ReviewPeriod implements OnInit {
   private router = inject(Router);
   private authService = inject(AuthService);
   private reviewPeriodService = inject(ReviewPeriodService);
+  permissionService = inject(PermissionService);
 
   isSidebarCollapsed = false;
   showForm = false;
@@ -35,8 +37,7 @@ export class ReviewPeriod implements OnInit {
       description: [''],
       startDate: ['', Validators.required],
       endDate: ['', [Validators.required, this.endDateValidator.bind(this)]],
-      status: ['Draft', Validators.required],
-      isActive: [false]
+      status: ['Closed', Validators.required]  // Default to 'Closed', is_active synced automatically
     });
   }
 
@@ -57,8 +58,9 @@ export class ReviewPeriod implements OnInit {
     this.isLoading = true;
     this.reviewPeriodService.getAllReviewPeriods().subscribe({
       next: (periods: any[]) => {
-        this.activePeriods = periods.filter(p => p.is_active === true);
-        this.inactivePeriods = periods.filter(p => p.is_active === false);
+        // Filter by status: 'Open' = active, 'Closed' = inactive
+        this.activePeriods = periods.filter(p => p.status === 'Open');
+        this.inactivePeriods = periods.filter(p => p.status === 'Closed' || !p.status);
         this.isLoading = false;
       },
       error: (error) => {
@@ -94,6 +96,14 @@ export class ReviewPeriod implements OnInit {
     this.router.navigate(['/evaluation-periods']);
   }
 
+  navigateToReports() {
+    this.router.navigate(['/hr-reports']);
+  }
+
+  navigateToManagement() {
+    this.router.navigate(['/hr-management']);
+  }
+
   signOut() {
     this.authService.logout();
     this.router.navigate(['/login']);
@@ -105,7 +115,7 @@ export class ReviewPeriod implements OnInit {
 
   closeForm() {
     this.showForm = false;
-    this.reviewPeriodForm.reset({ status: 'Draft', isActive: false });
+    this.reviewPeriodForm.reset({ status: 'Closed' });
     this.errorMessage = '';
     this.successMessage = '';
     // Reset validation state
@@ -139,8 +149,7 @@ export class ReviewPeriod implements OnInit {
       description: formValue.description || null,
       start_date: formValue.startDate,
       end_date: formValue.endDate,
-      status: formValue.status || 'Draft',
-      is_active: formValue.isActive || false
+      status: formValue.status || 'Closed'  // is_active synced automatically by backend
     };
 
     this.reviewPeriodService.createReviewPeriod(payload).subscribe({
@@ -160,6 +169,52 @@ export class ReviewPeriod implements OnInit {
         this.isSubmitting = false;
         console.error('Error creating Review Period:', error);
         this.errorMessage = error.error?.error || 'Failed to create Review Period. Please try again.';
+      }
+    });
+  }
+
+  openPeriod(periodId: number) {
+    this.isLoading = true;
+    this.errorMessage = '';
+    this.reviewPeriodService.openReviewPeriod(periodId).subscribe({
+      next: (response) => {
+        this.isLoading = false;
+        this.successMessage = 'Review period opened successfully!';
+        this.loadReviewPeriods();
+        setTimeout(() => {
+          this.successMessage = '';
+        }, 3000);
+      },
+      error: (error) => {
+        this.isLoading = false;
+        console.error('Error opening review period:', error);
+        this.errorMessage = error.error?.error || 'Failed to open review period. Please try again.';
+        setTimeout(() => {
+          this.errorMessage = '';
+        }, 5000);
+      }
+    });
+  }
+
+  closePeriod(periodId: number) {
+    this.isLoading = true;
+    this.errorMessage = '';
+    this.reviewPeriodService.closeReviewPeriod(periodId).subscribe({
+      next: (response) => {
+        this.isLoading = false;
+        this.successMessage = 'Review period closed successfully!';
+        this.loadReviewPeriods();
+        setTimeout(() => {
+          this.successMessage = '';
+        }, 3000);
+      },
+      error: (error) => {
+        this.isLoading = false;
+        console.error('Error closing review period:', error);
+        this.errorMessage = error.error?.error || 'Failed to close review period. Please try again.';
+        setTimeout(() => {
+          this.errorMessage = '';
+        }, 5000);
       }
     });
   }

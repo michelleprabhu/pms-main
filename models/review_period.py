@@ -13,8 +13,8 @@ class ReviewPeriod(AuditMixin, db.Model):
     end_date = db.Column(db.Date, nullable=False)
     financial_period = db.Column(db.String(50), nullable=True)  # e.g., 'FY2024', 'FY2025'
     description = db.Column(db.Text, nullable=True)
-    status = db.Column(db.String(20), nullable=True, default='Draft')  # 'Draft', 'Active', 'Completed'
-    is_active = db.Column(db.Boolean, nullable=False, default=True)
+    status = db.Column(db.String(20), nullable=True, default='Closed')  # 'Open' or 'Closed'
+    is_active = db.Column(db.Boolean, nullable=False, default=False)  # True when status='Open', False when status='Closed'
     created_by = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     updated_by = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
 
@@ -26,6 +26,28 @@ class ReviewPeriod(AuditMixin, db.Model):
     __table_args__ = (
         CheckConstraint('end_date > start_date', name='check_end_after_start'),
     )
+
+    def open_period(self):
+        """Open this review period - sets status='Open' and is_active=True"""
+        # Close all other open periods first
+        other_open_periods = ReviewPeriod.query.filter(
+            ReviewPeriod.id != self.id,
+            ReviewPeriod.status == 'Open',
+            ReviewPeriod.deleted_at.is_(None)
+        ).all()
+        for period in other_open_periods:
+            period.status = 'Closed'
+            period.is_active = False
+        
+        self.status = 'Open'
+        self.is_active = True
+        self.updated_at = datetime.utcnow()
+    
+    def close_period(self):
+        """Close this review period - sets status='Closed' and is_active=False"""
+        self.status = 'Closed'
+        self.is_active = False
+        self.updated_at = datetime.utcnow()
 
     def to_dict(self):
         return {

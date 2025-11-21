@@ -4,6 +4,7 @@ import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { Router } from '@angular/router';
 import { AuthService } from '../../../services/auth.service';
 import { RoleService } from '../../../services/role.service';
+import { PermissionService } from '../../../services/permission.service';
 
 @Component({
   selector: 'app-login',
@@ -16,6 +17,7 @@ export class Login {
   private authService = inject(AuthService);
   private router = inject(Router);
   private roleService = inject(RoleService);
+  private permissionService = inject(PermissionService);
 
   loginForm: FormGroup;
   errorMessage = '';
@@ -44,10 +46,15 @@ export class Login {
         localStorage.setItem('token', response.token);
         localStorage.setItem('user', JSON.stringify(response.user));
         
+        // Store permissions in permission service
+        const permissions = response.user.permissions || [];
+        this.permissionService.setPermissions(permissions);
+        
         // Debug logs
         console.log('Login response:', response);
         console.log('Role ID:', response.user.role_id, 'Type:', typeof response.user.role_id);
         console.log('Role name:', response.user.role);
+        console.log('Permissions:', permissions);
         
         // Route based on role name (dynamic - works even if role_id changes)
         const roleName = response.user.role; // e.g., "HR Admin"

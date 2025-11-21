@@ -1,8 +1,9 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, NgForm } from '@angular/forms';
 import { Router } from '@angular/router';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { PermissionService } from '../../services/permission.service';
 
 interface ReviewPeriod {
   id: number;
@@ -70,7 +71,11 @@ export class PlanningComponent implements OnInit {
 
   eligibilityProfiles: EligibilityProfile[] = [];
 
-  constructor(private router: Router, private http: HttpClient) {}
+  constructor(
+    private router: Router,
+    private http: HttpClient,
+    public permissionService: PermissionService
+  ) {}
 
   ngOnInit() {
     this.loadEligibilityProfiles();
@@ -144,6 +149,18 @@ export class PlanningComponent implements OnInit {
 
   navigateToEvaluation() {
     this.router.navigate(['/evaluation-periods']);
+  }
+
+  navigateToReports() {
+    this.router.navigate(['/hr-reports']);
+  }
+
+  navigateToManagement() {
+    this.router.navigate(['/hr-management']);
+  }
+
+  navigateToEligibilityProfiles() {
+    this.router.navigate(['/planning/eligibility-profiles']);
   }
 
   viewPlanningEmployees(periodId: number) {
@@ -284,7 +301,8 @@ export class PlanningComponent implements OnInit {
   startScoreCardProcess() {
     this.showGeneratedEmployees = false;
     this.generatedEmployees = [];
-    this.router.navigate(['/score-cards/list'], { queryParams: { periodId: 1 } });
+    // Use the actual reviewPeriodId that was used to generate score cards
+    this.router.navigate(['/score-cards/list'], { queryParams: { periodId: this.reviewPeriodId } });
   }
 }
 

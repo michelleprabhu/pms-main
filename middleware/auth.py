@@ -123,3 +123,34 @@ def role_required(*allowed_role_names):
         return decorated_function
     return decorator
 
+
+def permission_required(*permission_codes):
+    """Decorator to check user permissions (via their role)
+    Usage: @permission_required('edit_employee_profile')  # Single permission
+           @permission_required('edit_employee_profile', 'delete_employee')  # User needs at least one
+    
+    This decorator checks if the user (via their role) has at least one of the specified permissions.
+    Must be used after @authenticate_token to ensure request.user is set.
+    """
+    def decorator(f):
+        @wraps(f)
+        def decorated_function(*args, **kwargs):
+            if not hasattr(request, 'user'):
+                return jsonify({'error': 'Authentication required'}), 401
+            
+            user_id = request.user.get('user_id') or request.user.get('id')
+            if not user_id:
+                return jsonify({'error': 'User ID not found in token'}), 401
+            
+            # Check if user has at least one of the required permissions
+            from services.permission_service import user_has_any_permission
+            if not user_has_any_permission(user_id, list(permission_codes)):
+                return jsonify({
+                    'error': 'Insufficient permissions',
+                    'required_permissions': list(permission_codes)
+                }), 403
+            
+            return f(*args, **kwargs)
+        return decorated_function
+    return decorator
+

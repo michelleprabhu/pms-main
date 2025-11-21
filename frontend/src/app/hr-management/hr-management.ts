@@ -1,6 +1,7 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
+import { PermissionService } from '../../services/permission.service';
 
 @Component({
   selector: 'app-hr-management',
@@ -12,7 +13,10 @@ import { Router } from '@angular/router';
 export class HrManagementComponent {
   isSidebarCollapsed = false;
 
-  constructor(private router: Router) {}
+  constructor(
+    private router: Router,
+    public permissionService: PermissionService
+  ) {}
 
   toggleSidebar() {
     this.isSidebarCollapsed = !this.isSidebarCollapsed;
@@ -56,6 +60,10 @@ export class HrManagementComponent {
 
   navigateToPositions() {
     this.router.navigate(['/hr-positions']);
+  }
+
+  navigateToPermissions() {
+    this.router.navigate(['/hr-permissions']);
   }
 
   signOut() {

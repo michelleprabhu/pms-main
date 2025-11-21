@@ -13,11 +13,11 @@
           <span class="nav-icon"><i class="fas fa-chart-line"></i></span>
           <span class="nav-text" *ngIf="!isSidebarCollapsed">Dashboard</span>
         </div>
-        <div class="nav-item" (click)="navigateToScoreCards()">
+        <div class="nav-item" *ngIf="permissionService.hasPermission('view_scorecards_page')" (click)="navigateToScoreCards()">
           <span class="nav-icon"><i class="fas fa-clipboard-check"></i></span>
           <span class="nav-text" *ngIf="!isSidebarCollapsed">Score Cards</span>
         </div>
-        <div class="nav-item" (click)="navigateToEvaluation()">
+        <div class="nav-item" *ngIf="permissionService.hasPermission('view_evaluation_page')" (click)="navigateToEvaluation()">
           <span class="nav-icon"><i class="fas fa-star"></i></span>
           <span class="nav-text" *ngIf="!isSidebarCollapsed">Evaluation</span>
         </div>

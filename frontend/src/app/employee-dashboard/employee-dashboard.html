@@ -13,15 +13,15 @@
           <span class="nav-icon"><i class="fas fa-chart-line"></i></span>
           <span class="nav-text" *ngIf="!isSidebarCollapsed">Dashboard</span>
         </div>
-        <div class="nav-item" (click)="navigateToSelfEvaluation()">
+        <div class="nav-item" *ngIf="permissionService.hasPermission('view_self_evaluation')" (click)="navigateToSelfEvaluation()">
           <span class="nav-icon"><i class="fas fa-clipboard-check"></i></span>
           <span class="nav-text" *ngIf="!isSidebarCollapsed">Self Evaluation</span>
         </div>
-        <div class="nav-item" (click)="navigateToMyScoreCard()">
+        <div class="nav-item" *ngIf="permissionService.hasPermission('view_employee_scorecards')" (click)="navigateToMyScoreCard()">
           <span class="nav-icon"><i class="fas fa-clipboard-list"></i></span>
           <span class="nav-text" *ngIf="!isSidebarCollapsed">My Score Card</span>
         </div>
-        <div class="nav-item" (click)="navigateToRatings()">
+        <div class="nav-item" *ngIf="permissionService.hasPermission('view_employee_ratings')" (click)="navigateToRatings()">
           <span class="nav-icon"><i class="fas fa-star"></i></span>
           <span class="nav-text" *ngIf="!isSidebarCollapsed">Ratings</span>
         </div>

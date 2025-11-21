@@ -1,6 +1,7 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
+import { PermissionService } from '../../services/permission.service';
 
 interface ReviewPeriod {
   id: number;
@@ -34,7 +35,10 @@ export class EvaluationPeriodsComponent {
     { id: 6, name: 'Annual 2023', startDate: 'Jan 1, 2023', endDate: 'Dec 31, 2023', status: 'Completed', employeeCount: 220 }
   ];
 
-  constructor(private router: Router) {}
+  constructor(
+    private router: Router,
+    public permissionService: PermissionService
+  ) {}
 
   toggleSidebar() {
     this.isSidebarCollapsed = !this.isSidebarCollapsed;
@@ -58,6 +62,14 @@ export class EvaluationPeriodsComponent {
 
   navigateToEvaluation() {
     this.router.navigate(['/evaluation-periods']);
+  }
+
+  navigateToReports() {
+    this.router.navigate(['/hr-reports']);
+  }
+
+  navigateToManagement() {
+    this.router.navigate(['/hr-management']);
   }
 
   viewPeriodEvaluations(periodId: number) {

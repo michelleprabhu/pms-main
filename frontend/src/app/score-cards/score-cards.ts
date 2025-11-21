@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { PermissionService } from '../../services/permission.service';
 
 interface ScoreCard {
   employeeName: string;
@@ -98,7 +99,11 @@ export class ScoreCards implements OnInit {
     }
   ];
 
-  constructor(private router: Router, private http: HttpClient) {}
+  constructor(
+    private router: Router, 
+    private http: HttpClient,
+    public permissionService: PermissionService
+  ) {}
 
   ngOnInit() {
     this.loadActiveReviewPeriods();
@@ -158,6 +163,14 @@ export class ScoreCards implements OnInit {
 
   navigateToScoreCards() {
     this.router.navigate(['/score-cards']);
+  }
+
+  navigateToReports() {
+    this.router.navigate(['/hr-reports']);
+  }
+
+  navigateToManagement() {
+    this.router.navigate(['/hr-management']);
   }
 
   signOut() {

@@ -29,6 +29,7 @@ def create_app():
         # Import ALL models to ensure relationships are set up
         # This is necessary because SQLAlchemy needs all related models loaded
         from models.role import Role
+        from models.permission import Permission
         from models.user import User
         from models.employee import Employee
         from models.department import Department
@@ -42,13 +43,20 @@ def create_app():
         from models.master import Master
         from models.eligibility_profile import EligibilityProfile
         
-        # Now load roles
+        # Now load roles and permissions
         from services.role_service import load_roles
+        from services.permission_service import reload_permissions
         try:
             load_roles()
         except Exception as e:
             print(f"Warning: Could not load roles at startup: {e}")
             print("Roles will be loaded on first use")
+        
+        try:
+            reload_permissions()
+        except Exception as e:
+            print(f"Warning: Could not load permissions at startup: {e}")
+            print("Permissions will be loaded on first use")
     
     # Register routes
     register_routes(app)
@@ -85,7 +93,7 @@ def register_routes(app):
         create_review_period, get_all_review_periods, get_review_period_by_id,
         update_review_period, delete_review_period, open_review_period, close_review_period
     )
-    from middleware.auth import authenticate_token, authorize_role, role_required
+    from middleware.auth import authenticate_token, authorize_role, role_required, permission_required
 
     # Auth Routes
     @app.route('/api/register', methods=['POST'])
@@ -256,7 +264,8 @@ def register_routes(app):
 
     @app.route('/api/review-periods', methods=['POST'])
     @authenticate_token
-    @role_required('HR Admin')  # Only HR Admin can create review periods (dynamic lookup)
+    @role_required('HR Admin')  # Keep for backward compatibility
+    @permission_required('create_review_period')  # New permission check
     def create_review_period_route():
         """Create a new review period (HR Admin only)"""
         data = request.get_json()
@@ -269,6 +278,7 @@ def register_routes(app):
         
         try:
             from datetime import datetime
+            # Status defaults to 'Closed', is_active is automatically synced by service
             period = create_review_period(
                 period_name=data['period_name'],
                 period_type=data['period_type'],
@@ -276,8 +286,7 @@ def register_routes(app):
                 end_date=datetime.strptime(data['end_date'], '%Y-%m-%d').date(),
                 financial_period=data.get('financial_period'),
                 description=data.get('description'),
-                status=data.get('status', 'Draft'),
-                is_active=data.get('is_active', False),
+                status=data.get('status', 'Closed'),  # Default to 'Closed'
                 created_by=request.user.get('user_id') or request.user.get('id')
             )
             return jsonify(period.to_dict()), 201
@@ -316,6 +325,8 @@ def register_routes(app):
                 update_data['financial_period'] = data['financial_period']
             if 'description' in data:
                 update_data['description'] = data['description']
+            if 'status' in data:
+                update_data['status'] = data['status']  # is_active will be synced automatically
             
             period = update_review_period(period_id, **update_data)
             if not period:
@@ -387,7 +398,8 @@ def register_routes(app):
     # Eligibility Profile Routes
     @app.route('/api/eligibility-profiles', methods=['GET'])
     @authenticate_token
-    @role_required('HR Admin')
+    @role_required('HR Admin')  # Keep for backward compatibility
+    @permission_required('generate_score_cards')  # New permission check
     def get_eligibility_profiles():
         """Get all eligibility profiles with counts (HR Admin only)"""
         from services.eligibility_service import get_all_profiles_with_counts, get_matching_employees
@@ -409,9 +421,131 @@ def register_routes(app):
         
         return jsonify(profiles), 200
 
+    # Department Routes
+    @app.route('/api/departments', methods=['GET'])
+    @authenticate_token
+    def get_departments():
+        """Get all active departments"""
+        from models.department import Department
+        
+        departments = Department.query.filter_by(
+            deleted_at=None
+        ).order_by(Department.name).all()
+        
+        return jsonify([{
+            'id': d.id,
+            'name': d.name,
+            'description': d.description
+        } for d in departments]), 200
+
+    # Position Routes
+    @app.route('/api/positions', methods=['GET'])
+    @authenticate_token
+    def get_positions():
+        """Get all active positions"""
+        from models.position import Position
+        
+        # Optional: filter by department_id if provided
+        department_id = request.args.get('department_id', type=int)
+        
+        query = Position.query.filter_by(deleted_at=None)
+        if department_id:
+            query = query.filter_by(department_id=department_id)
+        
+        positions = query.order_by(Position.title).all()
+        
+        return jsonify([{
+            'id': p.id,
+            'title': p.title,
+            'department_id': p.department_id,
+            'department_name': p.department.name if p.department else None,
+            'grade_level': p.grade_level
+        } for p in positions]), 200
+
+    @app.route('/api/eligibility-profiles', methods=['POST'])
+    @authenticate_token
+    @role_required('HR Admin')  # Keep for backward compatibility
+    @permission_required('generate_score_cards')  # New permission check
+    def create_eligibility_profile():
+        """Create a new eligibility profile (HR Admin only)"""
+        from services.eligibility_service import create_eligibility_profile as create_profile
+        from models.eligibility_profile import EligibilityProfile
+        
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': 'Request body is required'}), 400
+        
+        profile_name = data.get('profile_name')
+        if not profile_name:
+            return jsonify({'error': 'profile_name is required'}), 400
+        
+        # Check for duplicate profile name
+        existing = EligibilityProfile.query.filter(
+            EligibilityProfile.profile_name == profile_name,
+            EligibilityProfile.deleted_at.is_(None)
+        ).first()
+        if existing:
+            return jsonify({'error': f'Profile name "{profile_name}" already exists'}), 400
+        
+        try:
+            current_user_id = request.user.get('user_id') or request.user.get('id')
+            
+            # Get and clean the data
+            # Frontend sends "All" for empty selections (matching seed data format)
+            department_filter = data.get('department_filter')
+            if department_filter == '' or department_filter is None:
+                department_filter = 'All'  # Default to "All" if empty
+            else:
+                department_filter = str(department_filter).strip()
+            
+            position_criteria = data.get('position_criteria')
+            if position_criteria == '' or position_criteria is None:
+                position_criteria = 'All'  # Default to "All" if empty
+            else:
+                position_criteria = str(position_criteria).strip()
+            
+            description = data.get('description')
+            if description == '' or description is None:
+                description = None
+            else:
+                description = str(description).strip()
+            
+            print(f"Creating profile with: department_filter='{department_filter}', position_criteria='{position_criteria}'")  # Debug
+            
+            profile = create_profile(
+                profile_name=profile_name,
+                description=description,
+                department_filter=department_filter,
+                position_criteria=position_criteria,
+                is_active=data.get('is_active', True),
+                created_by=current_user_id
+            )
+            
+            # Get matching employees count
+            from services.eligibility_service import get_matching_employees
+            employee_ids = get_matching_employees(profile.id)
+            
+            return jsonify({
+                'id': profile.id,
+                'profile_name': profile.profile_name,
+                'description': profile.description,
+                'department': profile.department_filter,
+                'position_criteria': profile.position_criteria,
+                'matching_employees': len(employee_ids),
+                'is_active': profile.is_active
+            }), 201
+        except ValueError as e:
+            return jsonify({'error': str(e)}), 400
+        except Exception as e:
+            print(f"Error creating eligibility profile: {str(e)}")
+            import traceback
+            traceback.print_exc()
+            return jsonify({'error': f'Failed to create eligibility profile: {str(e)}'}), 500
+
     @app.route('/api/planning/generate-score-cards', methods=['POST'])
     @authenticate_token
-    @role_required('HR Admin')
+    @role_required('HR Admin')  # Keep for backward compatibility
+    @permission_required('generate_score_cards')  # New permission check
     def generate_score_cards():
         """
         Generate score cards for selected eligibility profiles.
@@ -548,7 +682,8 @@ def register_routes(app):
 
     @app.route('/api/score-cards/<int:score_card_id>/weightage', methods=['PUT'])
     @authenticate_token
-    @role_required('HR Admin')
+    @role_required('HR Admin')  # Keep for backward compatibility
+    @permission_required('update_score_card_weightage')  # New permission check
     def update_score_card_weightage(score_card_id):
         """Update weightage distribution (must total 100%)"""
         score_card = ScoreCard.query.get(score_card_id)
@@ -826,7 +961,8 @@ def register_routes(app):
 
     @app.route('/api/score-cards/<int:score_card_id>/send-for-acceptance', methods=['POST'])
     @authenticate_token
-    @role_required('HR Admin')
+    @role_required('HR Admin')  # Keep for backward compatibility
+    @permission_required('send_score_card_acceptance')  # New permission check
     def send_score_card_for_acceptance(score_card_id):
         """Send score card for employee acceptance (validates goal weights)"""
         
@@ -860,6 +996,115 @@ def register_routes(app):
             'message': 'Score card sent for employee acceptance',
             'score_card_id': score_card_id,
             'status': 'pending_acceptance'
+        }), 200
+
+    # Permission Management Routes
+    @app.route('/api/permissions', methods=['GET'])
+    @authenticate_token
+    @permission_required('manage_permissions')  # Only users with permission management can view all permissions
+    def get_all_permissions_route():
+        """Get all permissions, grouped by category"""
+        from services.permission_service import get_all_permissions
+        
+        permissions = get_all_permissions(include_inactive=False)
+        
+        # Group by category
+        grouped = {}
+        for perm in permissions:
+            category = perm.category or 'other'
+            if category not in grouped:
+                grouped[category] = []
+            grouped[category].append(perm.to_dict())
+        
+        return jsonify({
+            'permissions': [p.to_dict() for p in permissions],
+            'grouped_by_category': grouped
+        }), 200
+
+    @app.route('/api/roles/<int:role_id>/permissions', methods=['GET'])
+    @authenticate_token
+    @permission_required('manage_permissions')
+    def get_role_permissions_route(role_id):
+        """Get all permissions for a specific role"""
+        from services.permission_service import get_permissions_by_role
+        from models.role import Role
+        
+        role = Role.query.filter_by(id=role_id, deleted_at=None).first()
+        if not role:
+            return jsonify({'error': 'Role not found'}), 404
+        
+        permissions = get_permissions_by_role(role_id)
+        
+        return jsonify({
+            'role_id': role_id,
+            'role_name': role.role_name,
+            'permissions': [p.to_dict() for p in permissions],
+            'permission_codes': [p.code for p in permissions]
+        }), 200
+
+    @app.route('/api/roles/<int:role_id>/permissions', methods=['PUT'])
+    @authenticate_token
+    @permission_required('manage_permissions')
+    def update_role_permissions_route(role_id):
+        """Update permissions for a role"""
+        from services.permission_service import assign_permissions_to_role
+        from models.role import Role
+        
+        role = Role.query.filter_by(id=role_id, deleted_at=None).first()
+        if not role:
+            return jsonify({'error': 'Role not found'}), 404
+        
+        data = request.get_json()
+        permission_ids = data.get('permission_ids', [])
+        
+        if not isinstance(permission_ids, list):
+            return jsonify({'error': 'permission_ids must be a list'}), 400
+        
+        success = assign_permissions_to_role(role_id, permission_ids)
+        if not success:
+            return jsonify({'error': 'Failed to update role permissions'}), 500
+        
+        # Return updated permissions
+        from services.permission_service import get_permissions_by_role
+        permissions = get_permissions_by_role(role_id)
+        
+        return jsonify({
+            'message': 'Role permissions updated successfully',
+            'role_id': role_id,
+            'role_name': role.role_name,
+            'permissions': [p.to_dict() for p in permissions],
+            'permission_codes': [p.code for p in permissions]
+        }), 200
+
+    @app.route('/api/users/<int:user_id>/permissions', methods=['GET'])
+    @authenticate_token
+    def get_user_permissions_route(user_id):
+        """Get all permissions for a user (for debugging/admin)"""
+        from services.permission_service import get_user_permissions, get_user_permission_codes
+        from models.user import User
+        
+        # Users can only view their own permissions, unless they have manage_permissions
+        current_user_id = request.user.get('user_id') or request.user.get('id')
+        if user_id != current_user_id:
+            # Check if current user has permission management
+            from services.permission_service import user_has_permission
+            if not user_has_permission(current_user_id, 'manage_permissions'):
+                return jsonify({'error': 'Insufficient permissions'}), 403
+        
+        user = User.query.filter_by(id=user_id, deleted_at=None).first()
+        if not user:
+            return jsonify({'error': 'User not found'}), 404
+        
+        permissions = get_user_permissions(user_id)
+        permission_codes = get_user_permission_codes(user_id)
+        
+        return jsonify({
+            'user_id': user_id,
+            'username': user.username,
+            'role_id': user.role_id,
+            'role_name': user.role.role_name if user.role else None,
+            'permissions': [p.to_dict() for p in permissions],
+            'permission_codes': list(permission_codes)
         }), 200
 
 

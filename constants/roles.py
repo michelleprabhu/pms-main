@@ -39,3 +39,5 @@ def get_role_name_by_id(role_id: int) -> str:
     """Get role_name by role_id"""
     return ROLE_ID_TO_NAME.get(role_id, 'Unknown')
 
+
+

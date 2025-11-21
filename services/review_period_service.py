@@ -2,8 +2,8 @@ from models.review_period import ReviewPeriod
 from extensions import db
 from datetime import datetime, date
 
-def create_review_period(period_name, period_type, start_date, end_date, financial_period=None, description=None, status='Draft', is_active=False, created_by=None):
-    """Create a new review period with validation"""
+def create_review_period(period_name, period_type, start_date, end_date, financial_period=None, description=None, status='Closed', created_by=None):
+    """Create a new review period with validation. Status must be 'Open' or 'Closed'. is_active is automatically synced."""
     # Validate end_date > start_date
     if end_date <= start_date:
         raise ValueError("End date must be after start date")
@@ -22,9 +22,23 @@ def create_review_period(period_name, period_type, start_date, end_date, financi
         raise ValueError(f"Period type must be one of: {', '.join(allowed_types)}")
     
     # Validate status
-    allowed_statuses = ['Draft', 'Active', 'Completed']
-    if status and status not in allowed_statuses:
+    allowed_statuses = ['Open', 'Closed']
+    status = status or 'Closed'
+    if status not in allowed_statuses:
         raise ValueError(f"Status must be one of: {', '.join(allowed_statuses)}")
+    
+    # Sync is_active with status
+    is_active = (status == 'Open')
+    
+    # If opening, close all other open periods first
+    if status == 'Open':
+        other_open_periods = ReviewPeriod.query.filter(
+            ReviewPeriod.status == 'Open',
+            ReviewPeriod.deleted_at.is_(None)
+        ).all()
+        for period in other_open_periods:
+            period.status = 'Closed'
+            period.is_active = False
     
     review_period = ReviewPeriod(
         period_name=period_name,
@@ -33,7 +47,7 @@ def create_review_period(period_name, period_type, start_date, end_date, financi
         end_date=end_date,
         financial_period=financial_period,
         description=description,
-        status=status or 'Draft',
+        status=status,
         is_active=is_active,
         created_by=created_by
     )
@@ -50,11 +64,22 @@ def get_review_period_by_id(period_id):
     return ReviewPeriod.query.get(period_id)
 
 def update_review_period(period_id, period_name=None, period_type=None, start_date=None, end_date=None, 
-                        financial_period=None, description=None):
-    """Update review period"""
+                        financial_period=None, description=None, status=None):
+    """Update review period. If status is provided, it must be 'Open' or 'Closed', and is_active will be synced automatically."""
     review_period = ReviewPeriod.query.get(period_id)
     if not review_period:
         return None
+    
+    # Validate end_date > start_date if dates are updated
+    if start_date and end_date:
+        if end_date <= start_date:
+            raise ValueError("End date must be after start date")
+    elif start_date and review_period.end_date:
+        if review_period.end_date <= start_date:
+            raise ValueError("End date must be after start date")
+    elif end_date and review_period.start_date:
+        if end_date <= review_period.start_date:
+            raise ValueError("End date must be after start date")
     
     if period_name:
         review_period.period_name = period_name
@@ -64,10 +89,30 @@ def update_review_period(period_id, period_name=None, period_type=None, start_da
         review_period.start_date = start_date
     if end_date:
         review_period.end_date = end_date
-    if financial_period:
+    if financial_period is not None:
         review_period.financial_period = financial_period
-    if description:
+    if description is not None:
         review_period.description = description
+    
+    # Handle status update - sync with is_active
+    if status is not None:
+        allowed_statuses = ['Open', 'Closed']
+        if status not in allowed_statuses:
+            raise ValueError(f"Status must be one of: {', '.join(allowed_statuses)}")
+        
+        # If opening, close all other open periods first
+        if status == 'Open' and review_period.status != 'Open':
+            other_open_periods = ReviewPeriod.query.filter(
+                ReviewPeriod.id != period_id,
+                ReviewPeriod.status == 'Open',
+                ReviewPeriod.deleted_at.is_(None)
+            ).all()
+            for period in other_open_periods:
+                period.status = 'Closed'
+                period.is_active = False
+        
+        review_period.status = status
+        review_period.is_active = (status == 'Open')
     
     review_period.updated_at = datetime.utcnow()
     db.session.commit()

@@ -26,8 +26,9 @@ class User(UserMixin, AuditMixin, db.Model):
     created_users = db.relationship('User', foreign_keys='User.created_by', remote_side=[id], lazy=True)
     updated_users = db.relationship('User', foreign_keys='User.updated_by', remote_side=[id], lazy=True)
 
-    def to_dict(self):
-        return {
+    def to_dict(self, include_permissions=True):
+        """Convert user to dictionary, optionally including permissions"""
+        data = {
             'id': self.id,
             'username': self.username,
             'email': self.email,
@@ -42,3 +43,15 @@ class User(UserMixin, AuditMixin, db.Model):
             'updated_at': self.updated_at.isoformat() if self.updated_at else None,
             'deleted_at': self.deleted_at.isoformat() if self.deleted_at else None
         }
+        
+        # Include permissions if requested
+        if include_permissions:
+            try:
+                from services.permission_service import get_user_permission_codes
+                data['permissions'] = list(get_user_permission_codes(self.id))
+            except Exception as e:
+                # If permission service fails, just return empty list
+                # This ensures backward compatibility
+                data['permissions'] = []
+        
+        return data

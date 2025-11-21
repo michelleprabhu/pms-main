@@ -3,6 +3,14 @@ from models.base import AuditMixin
 from datetime import datetime
 
 
+# Association table for many-to-many relationship between Role and Permission
+role_permissions = db.Table('role_permissions',
+    db.Column('role_id', db.Integer, db.ForeignKey('roles.id', ondelete='CASCADE'), primary_key=True),
+    db.Column('permission_id', db.Integer, db.ForeignKey('permissions.id', ondelete='CASCADE'), primary_key=True),
+    db.Column('created_at', db.DateTime, default=datetime.utcnow, nullable=False)
+)
+
+
 class Role(AuditMixin, db.Model):
     __tablename__ = 'roles'
 
@@ -13,6 +21,7 @@ class Role(AuditMixin, db.Model):
 
     # Relationships
     users = db.relationship('User', back_populates='role', foreign_keys='User.role_id', lazy=True)
+    permissions = db.relationship('Permission', secondary=role_permissions, back_populates='roles', lazy='dynamic')
     created_by_user = db.relationship('User', foreign_keys='Role.created_by', remote_side='User.id', lazy=True)
     updated_by_user = db.relationship('User', foreign_keys='Role.updated_by', remote_side='User.id', lazy=True)
 

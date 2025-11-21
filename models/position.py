@@ -36,3 +36,5 @@ class Position(AuditMixin, db.Model):
             'deleted_at': self.deleted_at.isoformat() if self.deleted_at else None
         }
 
+
+

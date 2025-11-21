@@ -1,6 +1,7 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
+import { PermissionService } from '../../services/permission.service';
 
 @Component({
   selector: 'app-manager-dashboard',
@@ -11,7 +12,10 @@ import { Router } from '@angular/router';
 export class ManagerDashboard {
   isSidebarCollapsed = false;
 
-  constructor(private router: Router) {}
+  constructor(
+    private router: Router,
+    public permissionService: PermissionService
+  ) {}
 
   toggleSidebar() {
     this.isSidebarCollapsed = !this.isSidebarCollapsed;

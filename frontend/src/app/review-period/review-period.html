@@ -27,11 +27,23 @@
         </div>
       </div>
 
+      <div class="nav-section" *ngIf="permissionService.hasPermission('view_hr_reports_page')">
+        <div class="section-title" *ngIf="!isSidebarCollapsed">Analytics</div>
+        <div class="nav-item" (click)="navigateToReports()">
+          <span class="nav-icon"><i class="fas fa-chart-bar"></i></span>
+          <span class="nav-text" *ngIf="!isSidebarCollapsed">Reports</span>
+        </div>
+      </div>
+
       <div class="nav-section">
         <div class="section-title" *ngIf="!isSidebarCollapsed">Settings</div>
         <div class="nav-item active">
           <span class="nav-icon"><i class="fas fa-calendar-alt"></i></span>
           <span class="nav-text" *ngIf="!isSidebarCollapsed">Review Periods</span>
+        </div>
+        <div class="nav-item" *ngIf="permissionService.hasPermission('view_hr_management_page')" (click)="navigateToManagement()">
+          <span class="nav-icon"><i class="fas fa-cog"></i></span>
+          <span class="nav-text" *ngIf="!isSidebarCollapsed">Management</span>
         </div>
       </div>
       
@@ -98,10 +110,13 @@
                     <td>{{ period.period_type }}</td>
                     <td>{{ formatDate(period.start_date) }}</td>
                     <td>{{ formatDate(period.end_date) }}</td>
-                    <td><span class="status-text">{{ period.status || 'Active' }}</span></td>
                     <td>
-                      <button class="btn-icon"><i class="fas fa-edit"></i></button>
-                      <button class="btn-icon"><i class="fas fa-trash"></i></button>
+                      <span class="status-badge status-open">{{ period.status || 'Open' }}</span>
+                    </td>
+                    <td>
+                      <button class="btn-action btn-close" (click)="closePeriod(period.id)" title="Close Period">
+                        <i class="fas fa-times-circle"></i> Close
+                      </button>
                     </td>
                   </tr>
                 }
@@ -146,10 +161,13 @@
                     <td>{{ period.period_type }}</td>
                     <td>{{ formatDate(period.start_date) }}</td>
                     <td>{{ formatDate(period.end_date) }}</td>
-                    <td><span class="status-text">{{ period.status || 'Inactive' }}</span></td>
                     <td>
-                      <button class="btn-icon"><i class="fas fa-eye"></i></button>
-                      <button class="btn-icon"><i class="fas fa-trash"></i></button>
+                      <span class="status-badge status-closed">{{ period.status || 'Closed' }}</span>
+                    </td>
+                    <td>
+                      <button class="btn-action btn-open" (click)="openPeriod(period.id)" title="Open Period">
+                        <i class="fas fa-check-circle"></i> Open
+                      </button>
                     </td>
                   </tr>
                 }
@@ -294,25 +312,13 @@
             class="form-control"
             [class.invalid]="reviewPeriodForm.get('status')?.invalid && reviewPeriodForm.get('status')?.touched"
           >
-            <option value="Draft">Draft</option>
-            <option value="Active">Active</option>
-            <option value="Completed">Completed</option>
+            <option value="Closed">Closed</option>
+            <option value="Open">Open</option>
           </select>
           @if (reviewPeriodForm.get('status')?.invalid && reviewPeriodForm.get('status')?.touched) {
             <span class="error-text">This field is required</span>
           }
-        </div>
-
-        <!-- Is Active -->
-        <div class="form-group">
-          <label class="checkbox-label">
-            <input 
-              type="checkbox" 
-              formControlName="isActive"
-              class="checkbox-input"
-            />
-            <span>Is Active</span>
-          </label>
+          <small class="form-hint">Note: Only one period can be open at a time. Opening this period will automatically close any other open period.</small>
         </div>
 
         <!-- Submit Button -->

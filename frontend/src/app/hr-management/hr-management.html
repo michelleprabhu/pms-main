@@ -29,7 +29,7 @@
 
       <div class="nav-section">
         <div class="section-title" *ngIf="!isSidebarCollapsed">Analytics</div>
-        <div class="nav-item" (click)="navigateToReports()">
+        <div class="nav-item" *ngIf="permissionService.hasPermission('view_hr_reports_page')" (click)="navigateToReports()">
           <span class="nav-icon"><i class="fas fa-chart-bar"></i></span>
           <span class="nav-text" *ngIf="!isSidebarCollapsed">Reports</span>
         </div>
@@ -37,11 +37,11 @@
 
       <div class="nav-section">
         <div class="section-title" *ngIf="!isSidebarCollapsed">Settings</div>
-        <div class="nav-item active" (click)="navigateToManagement()">
+        <div class="nav-item active" *ngIf="permissionService.hasPermission('view_hr_management_page')" (click)="navigateToManagement()">
           <span class="nav-icon"><i class="fas fa-cogs"></i></span>
           <span class="nav-text" *ngIf="!isSidebarCollapsed">Management</span>
         </div>
-        <div class="nav-item" (click)="navigateToReviewPeriod()">
+        <div class="nav-item" *ngIf="permissionService.hasAnyPermission(['create_review_period', 'edit_review_period', 'view_evaluation_page'])" (click)="navigateToReviewPeriod()">
           <span class="nav-icon"><i class="fas fa-calendar-alt"></i></span>
           <span class="nav-text" *ngIf="!isSidebarCollapsed">Review Periods</span>
         </div>
@@ -122,6 +122,23 @@
           </p>
           <button class="card-button" (click)="navigateToPositions()">
             <span>Manage Positions</span>
+            <i class="fas fa-arrow-right"></i>
+          </button>
+        </div>
+
+        <!-- Card 4: Permission Management -->
+        <div class="management-card" *ngIf="permissionService.hasPermission('manage_permissions')">
+          <div class="card-icon-wrapper">
+            <div class="card-icon">
+              <i class="fas fa-shield-alt"></i>
+            </div>
+          </div>
+          <h2 class="card-title">Permission Management</h2>
+          <p class="card-description">
+            Manage role permissions and access controls. Assign or remove permissions for different roles in the system
+          </p>
+          <button class="card-button" (click)="navigateToPermissions()">
+            <span>Manage Permissions</span>
             <i class="fas fa-arrow-right"></i>
           </button>
         </div>
