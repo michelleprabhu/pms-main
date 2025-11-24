@@ -77,6 +77,13 @@
         <h1 class="page-title">{{ isEditMode ? 'Edit Employee' : 'Add Employee' }}</h1>
       </div>
 
+      @if (errorMessage) {
+        <div class="alert alert-error">{{ errorMessage }}</div>
+      }
+      @if (successMessage) {
+        <div class="alert alert-success">{{ successMessage }}</div>
+      }
+
       <!-- Employee Form -->
       <form class="employee-form" (ngSubmit)="saveEmployee()">
         
@@ -88,7 +95,7 @@
           <div class="form-row">
             <div class="form-group">
               <label class="form-label">Employee ID</label>
-              <input type="text" class="form-control" [(ngModel)]="employeeForm.employeeId" name="employeeId" readonly />
+              <input type="text" class="form-control" [value]="isEditMode ? employeeForm.employeeId : 'Auto-generated'" name="employeeId" readonly />
             </div>
             <div class="form-group">
               <label class="form-label">Full Name <span class="required">*</span></label>
@@ -138,26 +145,27 @@
               <input type="date" class="form-control" [(ngModel)]="employeeForm.joiningDate" name="joiningDate" required />
             </div>
             <div class="form-group">
-              <label class="form-label">Position <span class="required">*</span></label>
-              <select class="form-control" [(ngModel)]="employeeForm.position" name="position" required>
-                <option value="">Select Position</option>
-                <option *ngFor="let position of positionOptions" [value]="position">{{ position }}</option>
+              <label class="form-label">Position</label>
+              <select class="form-control" [(ngModel)]="employeeForm.position_id" name="position_id">
+                <option [ngValue]="null">Select Position</option>
+                <option *ngFor="let position of positions" [ngValue]="position.id">{{ position.title }}</option>
               </select>
             </div>
           </div>
 
           <div class="form-row">
             <div class="form-group">
-              <label class="form-label">Department <span class="required">*</span></label>
-              <select class="form-control" [(ngModel)]="employeeForm.department" name="department" required>
-                <option value="">Select Department</option>
-                <option *ngFor="let dept of departmentOptions" [value]="dept">{{ dept }}</option>
+              <label class="form-label">Department</label>
+              <select class="form-control" [(ngModel)]="employeeForm.department_id" name="department_id">
+                <option [ngValue]="null">Select Department</option>
+                <option *ngFor="let dept of departments" [ngValue]="dept.id">{{ dept.name }}</option>
               </select>
             </div>
             <div class="form-group">
               <label class="form-label">Reporting Manager</label>
-              <select class="form-control" [(ngModel)]="employeeForm.reportingManager" name="reportingManager">
-                <option *ngFor="let manager of managerOptions" [value]="manager">{{ manager }}</option>
+              <select class="form-control" [(ngModel)]="employeeForm.reporting_manager_id" name="reporting_manager_id">
+                <option [ngValue]="null">None</option>
+                <option *ngFor="let emp of employees" [ngValue]="emp.id">{{ emp.full_name }} ({{ emp.employee_id }})</option>
               </select>
             </div>
           </div>
@@ -533,6 +541,13 @@
         <h1 class="page-title">{{ isEditMode ? 'Edit Employee' : 'Add Employee' }}</h1>
       </div>
 
+      @if (errorMessage) {
+        <div class="alert alert-error">{{ errorMessage }}</div>
+      }
+      @if (successMessage) {
+        <div class="alert alert-success">{{ successMessage }}</div>
+      }
+
       <!-- Employee Form -->
       <form class="employee-form" (ngSubmit)="saveEmployee()">
         
@@ -544,7 +559,7 @@
           <div class="form-row">
             <div class="form-group">
               <label class="form-label">Employee ID</label>
-              <input type="text" class="form-control" [(ngModel)]="employeeForm.employeeId" name="employeeId" readonly />
+              <input type="text" class="form-control" [value]="isEditMode ? employeeForm.employeeId : 'Auto-generated'" name="employeeId" readonly />
             </div>
             <div class="form-group">
               <label class="form-label">Full Name <span class="required">*</span></label>
@@ -594,26 +609,27 @@
               <input type="date" class="form-control" [(ngModel)]="employeeForm.joiningDate" name="joiningDate" required />
             </div>
             <div class="form-group">
-              <label class="form-label">Position <span class="required">*</span></label>
-              <select class="form-control" [(ngModel)]="employeeForm.position" name="position" required>
-                <option value="">Select Position</option>
-                <option *ngFor="let position of positionOptions" [value]="position">{{ position }}</option>
+              <label class="form-label">Position</label>
+              <select class="form-control" [(ngModel)]="employeeForm.position_id" name="position_id">
+                <option [ngValue]="null">Select Position</option>
+                <option *ngFor="let position of positions" [ngValue]="position.id">{{ position.title }}</option>
               </select>
             </div>
           </div>
 
           <div class="form-row">
             <div class="form-group">
-              <label class="form-label">Department <span class="required">*</span></label>
-              <select class="form-control" [(ngModel)]="employeeForm.department" name="department" required>
-                <option value="">Select Department</option>
-                <option *ngFor="let dept of departmentOptions" [value]="dept">{{ dept }}</option>
+              <label class="form-label">Department</label>
+              <select class="form-control" [(ngModel)]="employeeForm.department_id" name="department_id">
+                <option [ngValue]="null">Select Department</option>
+                <option *ngFor="let dept of departments" [ngValue]="dept.id">{{ dept.name }}</option>
               </select>
             </div>
             <div class="form-group">
               <label class="form-label">Reporting Manager</label>
-              <select class="form-control" [(ngModel)]="employeeForm.reportingManager" name="reportingManager">
-                <option *ngFor="let manager of managerOptions" [value]="manager">{{ manager }}</option>
+              <select class="form-control" [(ngModel)]="employeeForm.reporting_manager_id" name="reporting_manager_id">
+                <option [ngValue]="null">None</option>
+                <option *ngFor="let emp of employees" [ngValue]="emp.id">{{ emp.full_name }} ({{ emp.employee_id }})</option>
               </select>
             </div>
           </div>

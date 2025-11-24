@@ -237,10 +237,11 @@
       <form class="goal-form">
         <div class="form-group">
           <label>Select from Library Goal</label>
-          <select class="form-control" [(ngModel)]="selectedLibraryGoal" (change)="onLibraryGoalSelected()" name="libraryGoal">
+          <select class="form-control" [(ngModel)]="selectedLibraryGoal" (change)="onLibraryGoalSelected()" name="libraryGoal" [disabled]="isLoadingLibraryGoals">
             <option value="">-- Select a pre-defined goal or create custom --</option>
-            <option *ngFor="let goal of libraryGoals" [value]="goal.id">{{ goal.name }}</option>
+            <option *ngFor="let goal of libraryGoals" [value]="goal.id">{{ goal.goal_name || goal.name }}</option>
           </select>
+          <small *ngIf="isLoadingLibraryGoals" style="color: #666;">Loading library goals...</small>
         </div>
         
         <div class="form-divider">

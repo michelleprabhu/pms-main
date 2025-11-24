@@ -58,7 +58,22 @@
       <div class="review-periods-section">
         <h2 class="section-heading">Active Review Periods</h2>
 
-        <div class="periods-grid">
+        <!-- Error Message -->
+        <div *ngIf="errorMessage" class="error-message">
+          {{ errorMessage }}
+        </div>
+
+        <!-- Loading State -->
+        <div *ngIf="isLoading" style="text-align: center; padding: 40px;">
+          <span>Loading score cards...</span>
+        </div>
+
+        <!-- Active Periods -->
+        <div *ngIf="!isLoading && activeReviewPeriods.length === 0 && completedReviewPeriods.length === 0" style="text-align: center; padding: 40px; color: #999;">
+          No score cards found
+        </div>
+
+        <div class="periods-grid" *ngIf="!isLoading">
           <div class="period-card" *ngFor="let period of activeReviewPeriods" (click)="viewScoreCardDetails(period.id)">
             <div class="period-header">
               <h3 class="period-name">{{ period.name }}</h3>

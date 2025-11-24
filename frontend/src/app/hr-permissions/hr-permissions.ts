@@ -31,7 +31,7 @@ export class HrPermissionsComponent implements OnInit {
   private router = inject(Router);
   public permissionService = inject(PermissionService);
 
-  private apiUrl = 'http://localhost:5002/api';
+  private apiUrl = 'http://localhost:5003/api';
   
   // Expose Object to template
   Object = Object;

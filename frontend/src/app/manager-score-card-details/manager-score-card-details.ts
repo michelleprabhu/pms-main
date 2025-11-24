@@ -1,7 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 
 interface ScoreCard {
   employeeName: string;
@@ -53,193 +54,130 @@ export class ManagerScoreCardDetailsComponent implements OnInit {
   isSidebarCollapsed = false;
   activeTab: string = 'goals';
   scoreCard: ScoreCard | null = null;
+  scoreCardId: number = 0;
+  periodId: number = 0;
   newComment: string = '';
-  planningComments: PlanningComment[] = [
-    {
-      id: 1,
-      role: 'HR',
-      text: 'Please ensure all goals are measurable and aligned with company objectives.',
-      timestamp: new Date('2025-01-05T10:30:00')
-    },
-    {
-      id: 2,
-      role: 'Manager',
-      text: 'I will add team collaboration goals by end of this week.',
-      timestamp: new Date('2025-01-06T14:20:00')
-    }
-  ];
-  
-  goals: Goal[] = [
-    {
-      id: 1,
-      name: 'Increase Sales Revenue',
-      description: 'Achieve 20% growth in quarterly sales',
-      successCriteria: 'Revenue increases by $500K and meets or exceeds 20% growth target with documented customer acquisitions',
-      status: 'In Progress',
-      weight: 20,
-      reviewPeriod: 'Q1 2025',
-      startDate: 'Jan 1, 2025',
-      endDate: 'Mar 31, 2025',
-      addedBy: 'HR'
-    },
-    {
-      id: 2,
-      name: 'Improve Customer Satisfaction',
-      description: 'Increase CSAT score to 4.5/5',
-      successCriteria: 'CSAT survey results show consistent scores of 4.5 or higher across all customer touchpoints for 3 consecutive months',
-      status: 'In Progress',
-      weight: 20,
-      reviewPeriod: 'Q1 2025',
-      startDate: 'Jan 1, 2025',
-      endDate: 'Mar 31, 2025',
-      addedBy: 'HR'
-    },
-    {
-      id: 3,
-      name: 'Complete Team Code Review Process',
-      description: 'Implement and lead team code review sessions',
-      successCriteria: 'Conduct weekly code reviews with documented feedback and track improvement metrics',
-      status: 'In Progress',
-      weight: 30,
-      reviewPeriod: 'Q1 2025',
-      startDate: 'Jan 1, 2025',
-      endDate: 'Mar 31, 2025',
-      addedBy: 'Manager'
-    },
-    {
-      id: 4,
-      name: 'Learn New Technology Stack',
-      description: 'Complete training on React and TypeScript',
-      successCriteria: 'Build a demo project using React and TypeScript and present to team',
-      status: 'Not Started',
-      weight: 30,
-      reviewPeriod: 'Q1 2025',
-      startDate: 'Jan 15, 2025',
-      endDate: 'Mar 31, 2025',
-      addedBy: 'Employee'
-    }
-  ];
+  apiUrl = 'http://localhost:5003/api';
+  planningComments: PlanningComment[] = [];
+  goals: Goal[] = [];
+  goalsWeightage: number = 60;
+  competenciesWeightage: number = 25;
+  valuesWeightage: number = 15;
+  competencies: Competency[] = [];
 
-  competencies: Competency[] = [
-    {
-      name: 'Software Development',
-      description: 'Proficiency in coding, debugging, and software design patterns',
-      minLevel: 3,
-      maxLevel: 5
-    },
-    {
-      name: 'Code Review & Quality',
-      description: 'Ability to conduct thorough code reviews and maintain code quality standards',
-      minLevel: 3,
-      maxLevel: 5
-    },
-    {
-      name: 'System Design & Architecture',
-      description: 'Design scalable and maintainable system architectures',
-      minLevel: 3,
-      maxLevel: 5
-    },
-    {
-      name: 'DevOps & CI/CD',
-      description: 'Knowledge of deployment pipelines, containerization, and cloud platforms',
-      minLevel: 2,
-      maxLevel: 5
-    },
-    {
-      name: 'Database Management',
-      description: 'Proficiency in SQL/NoSQL databases, query optimization, and data modeling',
-      minLevel: 3,
-      maxLevel: 5
-    },
-    {
-      name: 'API Development',
-      description: 'Design and implement RESTful APIs and microservices',
-      minLevel: 3,
-      maxLevel: 5
-    },
-    {
-      name: 'Testing & QA',
-      description: 'Unit testing, integration testing, and test automation',
-      minLevel: 3,
-      maxLevel: 5
-    },
-    {
-      name: 'Version Control (Git)',
-      description: 'Proficiency in Git workflows, branching strategies, and collaboration',
-      minLevel: 4,
-      maxLevel: 5
-    },
-    {
-      name: 'Agile Methodologies',
-      description: 'Understanding of Scrum, Kanban, and agile development practices',
-      minLevel: 3,
-      maxLevel: 5
-    },
-    {
-      name: 'Problem Solving',
-      description: 'Analytical thinking and debugging complex technical issues',
-      minLevel: 4,
-      maxLevel: 5
-    },
-    {
-      name: 'Communication',
-      description: 'Clear technical communication with team members and stakeholders',
-      minLevel: 3,
-      maxLevel: 5
-    },
-    {
-      name: 'Leadership & Mentoring',
-      description: 'Ability to mentor junior developers and lead technical initiatives',
-      minLevel: 2,
-      maxLevel: 5
-    }
-  ];
+  values: Value[] = [];
 
-  values: Value[] = [
-    {
-      name: 'Integrity',
-      description: 'Demonstrates honesty and strong moral principles'
-    },
-    {
-      name: 'Innovation',
-      description: 'Brings creative solutions and new ideas'
-    },
-    {
-      name: 'Collaboration',
-      description: 'Works well with team members and stakeholders'
-    },
-    {
-      name: 'Customer Focus',
-      description: 'Prioritizes customer needs and satisfaction'
-    },
-    {
-      name: 'Accountability',
-      description: 'Takes ownership of work and commitments'
-    },
-    {
-      name: 'Continuous Learning',
-      description: 'Actively seeks to improve skills and knowledge'
-    }
-  ];
-
-  constructor(private router: Router) {
-    const navigation = this.router.getCurrentNavigation();
-    if (navigation?.extras?.state) {
-      this.scoreCard = navigation.extras.state['scoreCard'];
-    }
-  }
+  constructor(private router: Router, private route: ActivatedRoute, private http: HttpClient) { }
 
   ngOnInit() {
-    // If no score card data, initialize with mock data
-    if (!this.scoreCard) {
-      this.scoreCard = {
-        employeeName: 'Sarah Johnson',
-        reviewPeriod: 'Q1 2025',
-        createdOn: 'Jan 1, 2025',
-        createdBy: 'HR Admin',
-        status: 'Planning in Progress'
-      };
-    }
+    this.route.queryParams.subscribe(params => {
+      this.periodId = +params['periodId'] || 0;
+      if (this.periodId) {
+        this.loadScoreCardDetails();
+      }
+    });
+  }
+
+  loadScoreCardDetails() {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+
+    const headers = new HttpHeaders({
+      'Authorization': `Bearer ${token}`
+    });
+
+    // First get current user's employee_id
+    this.http.get(`${this.apiUrl}/current-user`, { headers }).subscribe({
+      next: (user: any) => {
+        if (!user.employee_id) {
+          console.error('User has no employee_id');
+          return;
+        }
+
+        // Find score card for this employee and period
+        this.http.get(`${this.apiUrl}/score-cards?employee_id=${user.employee_id}&review_period_id=${this.periodId}`, { headers }).subscribe({
+          next: (response: any) => {
+            const scoreCards = Array.isArray(response) ? response : [];
+            if (scoreCards.length > 0) {
+              const sc = scoreCards[0];
+              this.scoreCardId = sc.id;
+
+              // Get full score card details
+              this.http.get(`${this.apiUrl}/score-cards/${sc.id}`, { headers }).subscribe({
+                next: (details: any) => {
+                  this.scoreCard = {
+                    employeeName: details.employee?.full_name || 'Unknown',
+                    reviewPeriod: details.review_period?.period_name || 'N/A',
+                    createdOn: details.created_at ? new Date(details.created_at).toLocaleDateString() : 'N/A',
+                    createdBy: 'HR Admin', // Could fetch from created_by user
+                    status: details.status || 'planning'
+                  };
+
+                  // Update weightage
+                  this.goalsWeightage = details.goals_weightage || 60;
+                  this.competenciesWeightage = details.competencies_weightage || 25;
+                  this.valuesWeightage = details.values_weightage || 15;
+
+                  // Load goals
+                  this.loadGoals();
+                  this.loadComments();
+                  this.loadCompetencies();
+                  this.loadValues();
+                },
+                error: (err) => {
+                  console.error('Failed to load score card details:', err);
+                }
+              });
+            } else {
+              // No score card found
+              this.scoreCard = {
+                employeeName: user.employee?.full_name || user.username || 'Unknown',
+                reviewPeriod: 'N/A',
+                createdOn: 'N/A',
+                createdBy: 'N/A',
+                status: 'Not Found'
+              };
+            }
+          },
+          error: (err) => {
+            console.error('Failed to load score cards:', err);
+          }
+        });
+      },
+      error: (err) => {
+        console.error('Failed to load current user:', err);
+      }
+    });
+  }
+
+  loadGoals() {
+    if (!this.scoreCardId) return;
+
+    const token = localStorage.getItem('token');
+    const headers = new HttpHeaders({
+      'Authorization': `Bearer ${token}`
+    });
+
+    this.http.get(`${this.apiUrl}/score-cards/${this.scoreCardId}/goals`, { headers }).subscribe({
+      next: (response: any) => {
+        this.goals = (response.goals || []).map((goal: any) => ({
+          id: goal.id,
+          name: goal.goal_name,
+          description: goal.description || '',
+          successCriteria: goal.success_criteria || '',
+          status: goal.status || 'active',
+          weight: goal.weight,
+          reviewPeriod: this.scoreCard?.reviewPeriod || 'N/A',
+          startDate: goal.start_date || '',
+          endDate: goal.end_date || '',
+          addedBy: goal.added_by_role
+        }));
+      },
+      error: (err) => {
+        console.error('Failed to load goals:', err);
+        this.goals = [];
+      }
+    });
   }
 
   toggleSidebar() {
@@ -351,8 +289,9 @@ export class ManagerScoreCardDetailsComponent implements OnInit {
   }
 
   isPlanningPhase(): boolean {
-    // Check if the score card is in planning phase
-    return this.scoreCard?.status?.includes('Plan') || this.scoreCard?.status?.includes('Planning') || false;
+    if (!this.scoreCard) return false;
+    const planningStatuses = ['planning', 'Plan Started', 'Planning in Progress', 'Pending Employee Acceptance', 'pending_acceptance'];
+    return planningStatuses.includes(this.scoreCard.status);
   }
 
   canSaveAndNotify(): boolean {
@@ -368,23 +307,372 @@ export class ManagerScoreCardDetailsComponent implements OnInit {
     alert('Score card saved and notification sent to employee!');
   }
 
+  showAddGoalModal: boolean = false;
+  selectedLibraryGoal: string = '';
+  libraryGoals: any[] = [];
+  isLoadingLibraryGoals = false;
+
+  newGoal = {
+    name: '',
+    description: '',
+    status: '',
+    weight: 0,
+    startDate: '',
+    endDate: '',
+    deadlineDate: ''
+  };
+
   openAddGoalModal() {
-    console.log('Opening Add Goal modal for manager');
-    alert('Add Goal modal would open here (implement modal in future iteration)');
+    this.showAddGoalModal = true;
+    this.loadLibraryGoals();
+    this.resetGoalForm();
+  }
+
+  closeAddGoalModal() {
+    this.showAddGoalModal = false;
+    this.resetGoalForm();
+  }
+
+  resetGoalForm() {
+    this.newGoal = {
+      name: '',
+      description: '',
+      status: '',
+      weight: 0,
+      startDate: '',
+      endDate: '',
+      deadlineDate: ''
+    };
+    this.selectedLibraryGoal = '';
+  }
+
+  loadLibraryGoals() {
+    this.isLoadingLibraryGoals = true;
+    const token = localStorage.getItem('token');
+    if (!token) {
+      this.isLoadingLibraryGoals = false;
+      return;
+    }
+
+    const headers = new HttpHeaders({
+      'Authorization': `Bearer ${token}`
+    });
+
+    this.http.get(`${this.apiUrl}/goals-library`, { headers }).subscribe({
+      next: (response: any) => {
+        const goals = Array.isArray(response) ? response : (response.goals || []);
+        this.libraryGoals = goals;
+        this.isLoadingLibraryGoals = false;
+      },
+      error: (err) => {
+        console.error('Failed to load library goals:', err);
+        this.libraryGoals = [];
+        this.isLoadingLibraryGoals = false;
+      }
+    });
+  }
+
+  onLibraryGoalSelected() {
+    if (this.selectedLibraryGoal) {
+      const goal = this.libraryGoals.find(g => g.id === +this.selectedLibraryGoal);
+      if (goal) {
+        this.newGoal.name = goal.goal_name || goal.name;
+        this.newGoal.description = goal.description || '';
+        this.newGoal.weight = goal.suggested_weight ? parseInt(goal.suggested_weight.toString()) : 0;
+      }
+    } else {
+      this.newGoal.name = '';
+      this.newGoal.description = '';
+      this.newGoal.weight = 0;
+    }
+  }
+
+  addGoal() {
+    if (!this.newGoal.name || !this.newGoal.weight) {
+      alert('Please fill in goal name and weight');
+      return;
+    }
+
+    if (!this.scoreCardId) {
+      alert('No score card ID found');
+      return;
+    }
+
+    const token = localStorage.getItem('token');
+    if (!token) {
+      alert('Not authenticated');
+      return;
+    }
+
+    const headers = new HttpHeaders({
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    });
+
+    const payload: any = {
+      goal_name: this.newGoal.name,
+      description: this.newGoal.description || null,
+      weight: this.newGoal.weight
+    };
+
+    if (this.selectedLibraryGoal) {
+      payload.library_goal_id = parseInt(this.selectedLibraryGoal);
+    }
+
+    if (this.newGoal.startDate) payload.start_date = this.newGoal.startDate;
+    if (this.newGoal.endDate) payload.end_date = this.newGoal.endDate;
+    if (this.newGoal.deadlineDate) payload.deadline_date = this.newGoal.deadlineDate;
+    if (this.newGoal.status) payload.status = this.newGoal.status;
+
+    this.http.post(`${this.apiUrl}/score-cards/${this.scoreCardId}/goals`, payload, { headers })
+      .subscribe({
+        next: (response: any) => {
+          alert('Goal added successfully!');
+          this.closeAddGoalModal();
+          this.loadGoals(); // Reload goals list
+        },
+        error: (err) => {
+          console.error('Error adding goal:', err);
+          alert(err.error?.error || 'Failed to add goal. Please try again.');
+        }
+      });
+  }
+
+  loadComments() {
+    if (!this.scoreCardId) return;
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    const headers = new HttpHeaders({ 'Authorization': `Bearer ${token}` });
+
+    this.http.get(`${this.apiUrl}/score-cards/${this.scoreCardId}/comments`, { headers }).subscribe({
+      next: (comments: any) => {
+        this.planningComments = comments.map((c: any) => ({
+          id: c.id,
+          role: c.role,
+          text: c.text,
+          timestamp: new Date(c.timestamp)
+        }));
+      },
+      error: (err) => console.error('Failed to load comments:', err)
+    });
   }
 
   addComment() {
-    if (this.newComment.trim()) {
-      const comment: PlanningComment = {
-        id: this.planningComments.length + 1,
-        role: 'Manager',
-        text: this.newComment.trim(),
-        timestamp: new Date()
-      };
-      this.planningComments.push(comment);
-      this.newComment = '';
-      console.log('Manager added comment:', comment);
+    if (!this.newComment.trim()) return;
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    const headers = new HttpHeaders({ 'Authorization': `Bearer ${token}` });
+
+    this.http.post(`${this.apiUrl}/score-cards/${this.scoreCardId}/comments`, { text: this.newComment.trim() }, { headers }).subscribe({
+      next: (comment: any) => {
+        this.planningComments.push({
+          id: comment.id,
+          role: comment.role,
+          text: comment.text,
+          timestamp: new Date(comment.timestamp)
+        });
+        this.newComment = '';
+      },
+      error: (err) => {
+        console.error('Failed to add comment:', err);
+        alert('Error: ' + (err.error?.error || 'Failed to add comment'));
+      }
+    });
+  }
+
+  // Competencies Logic
+  showAddCompetencyModal = false;
+  libraryCompetencies: any[] = [];
+  isLoadingLibraryCompetencies = false;
+  selectedLibraryCompetency = '';
+  newCompetency = { name: '', description: '', targetLevel: '' };
+
+  loadCompetencies() {
+    if (!this.scoreCardId) return;
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    const headers = new HttpHeaders({ 'Authorization': `Bearer ${token}` });
+
+    this.http.get(`${this.apiUrl}/score-cards/${this.scoreCardId}/competencies`, { headers }).subscribe({
+      next: (comps: any) => {
+        this.competencies = comps.map((c: any) => ({
+          id: c.id,
+          name: c.name,
+          description: c.description,
+          minLevel: c.target_level,
+          maxLevel: ''
+        }));
+      },
+      error: (err) => console.error('Failed to load competencies:', err)
+    });
+  }
+
+  openAddCompetencyModal() {
+    this.showAddCompetencyModal = true;
+    this.loadLibraryCompetencies();
+    this.newCompetency = { name: '', description: '', targetLevel: '' };
+    this.selectedLibraryCompetency = '';
+  }
+
+  closeAddCompetencyModal() {
+    this.showAddCompetencyModal = false;
+  }
+
+  loadLibraryCompetencies() {
+    this.isLoadingLibraryCompetencies = true;
+    const token = localStorage.getItem('token');
+    const headers = new HttpHeaders({ 'Authorization': `Bearer ${token}` });
+
+    this.http.get(`${this.apiUrl}/competencies-library`, { headers }).subscribe({
+      next: (comps: any) => {
+        this.libraryCompetencies = comps || [];
+        this.isLoadingLibraryCompetencies = false;
+      },
+      error: (err) => {
+        console.error('Failed to load library competencies:', err);
+        this.isLoadingLibraryCompetencies = false;
+      }
+    });
+  }
+
+  onLibraryCompetencySelected() {
+    if (this.selectedLibraryCompetency) {
+      const comp = this.libraryCompetencies.find(c => c.id === +this.selectedLibraryCompetency);
+      if (comp) {
+        this.newCompetency.name = comp.competency_name;
+        this.newCompetency.description = comp.description;
+      }
+    } else {
+      this.newCompetency.name = '';
+      this.newCompetency.description = '';
     }
+  }
+
+  addCompetency() {
+    if (!this.newCompetency.name) {
+      alert('Please enter competency name');
+      return;
+    }
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    const headers = new HttpHeaders({ 'Authorization': `Bearer ${token}` });
+
+    const payload: any = {
+      name: this.newCompetency.name,
+      description: this.newCompetency.description,
+      target_level: this.newCompetency.targetLevel
+    };
+    if (this.selectedLibraryCompetency) {
+      payload.library_id = +this.selectedLibraryCompetency;
+    }
+
+    this.http.post(`${this.apiUrl}/score-cards/${this.scoreCardId}/competencies`, payload, { headers }).subscribe({
+      next: () => {
+        alert('Competency added successfully');
+        this.closeAddCompetencyModal();
+        this.loadCompetencies();
+      },
+      error: (err) => {
+        console.error('Failed to add competency:', err);
+        alert('Error: ' + (err.error?.error || 'Failed to add competency'));
+      }
+    });
+  }
+
+  // Values Logic
+  showAddValueModal = false;
+  libraryValues: any[] = [];
+  isLoadingLibraryValues = false;
+  selectedLibraryValue = '';
+  newValue = { name: '', description: '' };
+
+  loadValues() {
+    if (!this.scoreCardId) return;
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    const headers = new HttpHeaders({ 'Authorization': `Bearer ${token}` });
+
+    this.http.get(`${this.apiUrl}/score-cards/${this.scoreCardId}/values`, { headers }).subscribe({
+      next: (vals: any) => {
+        this.values = vals.map((v: any) => ({
+          id: v.id,
+          name: v.name,
+          description: v.description
+        }));
+      },
+      error: (err) => console.error('Failed to load values:', err)
+    });
+  }
+
+  openAddValueModal() {
+    this.showAddValueModal = true;
+    this.loadLibraryValues();
+    this.newValue = { name: '', description: '' };
+    this.selectedLibraryValue = '';
+  }
+
+  closeAddValueModal() {
+    this.showAddValueModal = false;
+  }
+
+  loadLibraryValues() {
+    this.isLoadingLibraryValues = true;
+    const token = localStorage.getItem('token');
+    const headers = new HttpHeaders({ 'Authorization': `Bearer ${token}` });
+
+    this.http.get(`${this.apiUrl}/values-library`, { headers }).subscribe({
+      next: (vals: any) => {
+        this.libraryValues = vals || [];
+        this.isLoadingLibraryValues = false;
+      },
+      error: (err) => {
+        console.error('Failed to load library values:', err);
+        this.isLoadingLibraryValues = false;
+      }
+    });
+  }
+
+  onLibraryValueSelected() {
+    if (this.selectedLibraryValue) {
+      const val = this.libraryValues.find(v => v.id === +this.selectedLibraryValue);
+      if (val) {
+        this.newValue.name = val.value_name || val.name;
+        this.newValue.description = val.description;
+      }
+    } else {
+      this.newValue.name = '';
+      this.newValue.description = '';
+    }
+  }
+
+  addValue() {
+    if (!this.newValue.name) {
+      alert('Please enter value name');
+      return;
+    }
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    const headers = new HttpHeaders({ 'Authorization': `Bearer ${token}` });
+
+    const payload: any = {
+      name: this.newValue.name,
+      description: this.newValue.description
+    };
+    if (this.selectedLibraryValue) {
+      payload.library_id = +this.selectedLibraryValue;
+    }
+
+    this.http.post(`${this.apiUrl}/score-cards/${this.scoreCardId}/values`, payload, { headers }).subscribe({
+      next: () => {
+        alert('Value added successfully');
+        this.closeAddValueModal();
+        this.loadValues();
+      },
+      error: (err) => {
+        console.error('Failed to add value:', err);
+        alert('Error: ' + (err.error?.error || 'Failed to add value'));
+      }
+    });
   }
 }
 

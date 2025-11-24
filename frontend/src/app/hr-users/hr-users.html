@@ -1,0 +1,202 @@
+<div class="dashboard-container">
+  <!-- Sidebar -->
+  <aside class="sidebar" [class.collapsed]="isSidebarCollapsed">
+    <div class="sidebar-header">
+      <img *ngIf="!isSidebarCollapsed" src="assets/logo.png" alt="iDUELA" class="logo" />
+      <img *ngIf="isSidebarCollapsed" src="assets/logo.png" alt="iDUELA" class="logo-small" />
+    </div>
+    
+    <nav class="sidebar-nav">
+      <div class="nav-section">
+        <div class="section-title" *ngIf="!isSidebarCollapsed">Home</div>
+        <div class="nav-item" (click)="navigateToDashboard()">
+          <span class="nav-icon"><i class="fas fa-chart-line"></i></span>
+          <span class="nav-text" *ngIf="!isSidebarCollapsed">Dashboard</span>
+        </div>
+        <div class="nav-item" (click)="navigateToPlanning()" *ngIf="permissionService.hasPermission('view_planning_page')">
+          <span class="nav-icon"><i class="fas fa-tasks"></i></span>
+          <span class="nav-text" *ngIf="!isSidebarCollapsed">Planning</span>
+        </div>
+        <div class="nav-item" (click)="navigateToScoreCards()" *ngIf="permissionService.hasPermission('view_scorecards_page')">
+          <span class="nav-icon"><i class="fas fa-clipboard-check"></i></span>
+          <span class="nav-text" *ngIf="!isSidebarCollapsed">Score Cards</span>
+        </div>
+        <div class="nav-item" (click)="navigateToEvaluation()" *ngIf="permissionService.hasPermission('view_evaluation_page')">
+          <span class="nav-icon"><i class="fas fa-star"></i></span>
+          <span class="nav-text" *ngIf="!isSidebarCollapsed">Evaluation</span>
+        </div>
+      </div>
+
+      <div class="nav-section" *ngIf="permissionService.hasPermission('view_hr_reports_page')">
+        <div class="section-title" *ngIf="!isSidebarCollapsed">Analytics</div>
+        <div class="nav-item" (click)="navigateToReports()">
+          <span class="nav-icon"><i class="fas fa-chart-bar"></i></span>
+          <span class="nav-text" *ngIf="!isSidebarCollapsed">Reports</span>
+        </div>
+      </div>
+
+      <div class="nav-section">
+        <div class="section-title" *ngIf="!isSidebarCollapsed">Settings</div>
+        <div class="nav-item" (click)="navigateToManagement()" *ngIf="permissionService.hasPermission('view_hr_management_page')">
+          <span class="nav-icon"><i class="fas fa-cogs"></i></span>
+          <span class="nav-text" *ngIf="!isSidebarCollapsed">Management</span>
+        </div>
+        <div class="nav-item" (click)="navigateToReviewPeriod()" *ngIf="permissionService.hasPermission('view_review_periods_page')">
+          <span class="nav-icon"><i class="fas fa-calendar-alt"></i></span>
+          <span class="nav-text" *ngIf="!isSidebarCollapsed">Review Periods</span>
+        </div>
+      </div>
+      
+      <div class="nav-spacer"></div>
+      
+      <div class="nav-item sign-out" (click)="signOut()">
+        <span class="nav-icon"><i class="fas fa-sign-out-alt"></i></span>
+        <span class="nav-text" *ngIf="!isSidebarCollapsed">Sign Out</span>
+      </div>
+    </nav>
+  </aside>
+
+  <!-- Main Content -->
+  <div class="main-content">
+    <header class="top-bar">
+      <button class="sidebar-toggle" (click)="toggleSidebar()">
+        <i class="fas fa-bars"></i>
+      </button>
+      <div class="page-name">Performance Management System</div>
+    </header>
+
+    <div class="page-content">
+      <div class="page-header">
+        <div class="header-left">
+          <button class="btn-back" (click)="navigateToManagement()">
+            <i class="fas fa-arrow-left"></i>
+            <span>Back to Management</span>
+          </button>
+          <h1 class="page-title">User Management</h1>
+        </div>
+        <button class="btn-add" (click)="openAddModal()">
+          <i class="fas fa-plus"></i>
+          <span>Add User</span>
+        </button>
+      </div>
+
+      @if (errorMessage) {
+        <div class="alert alert-error">{{ errorMessage }}</div>
+      }
+
+      <div class="table-card">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Username</th>
+              <th>Email</th>
+              <th>Role</th>
+              <th>Employee ID</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            @if (isLoading) {
+              <tr>
+                <td colspan="6" style="text-align: center; padding: 40px;">
+                  <span>Loading users...</span>
+                </td>
+              </tr>
+            } @else if (users.length === 0) {
+              <tr>
+                <td colspan="6" style="text-align: center; padding: 40px; color: #999;">
+                  <span>No users found</span>
+                </td>
+              </tr>
+            } @else {
+              @for (user of users; track user.id) {
+                <tr>
+                  <td>{{ user.username }}</td>
+                  <td>{{ user.email }}</td>
+                  <td>{{ typeof user.role === 'object' ? user.role.role_name : user.role || 'N/A' }}</td>
+                  <td>{{ user.employee_id || 'N/A' }}</td>
+                  <td>
+                    <span class="status-badge" [class.status-active]="user.is_active" [class.status-inactive]="!user.is_active">
+                      {{ user.is_active ? 'Active' : 'Inactive' }}
+                    </span>
+                  </td>
+                  <td>
+                    <div class="action-buttons">
+                      <button class="btn-icon btn-edit" (click)="openEditModal(user)" title="Edit">
+                        <i class="fas fa-pencil"></i>
+                      </button>
+                      <button class="btn-icon btn-delete" (click)="deleteUser(user)" title="Delete">
+                        <i class="fas fa-trash"></i>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              }
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add/Edit Modal -->
+  @if (showModal) {
+    <div class="modal-overlay" (click)="closeModal()">
+      <div class="modal-container" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h2 class="modal-title">{{ isEditMode ? 'Edit User' : 'Add User' }}</h2>
+          <button class="btn-close" (click)="closeModal()">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label class="form-label">Username <span class="required">*</span></label>
+            <input type="text" [(ngModel)]="userForm.username" class="form-control" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Email <span class="required">*</span></label>
+            <input type="email" [(ngModel)]="userForm.email" class="form-control" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">
+              Password
+              @if (!isEditMode) {
+                <span class="required">*</span>
+              } @else {
+                <span style="color: #666; font-weight: normal;">(leave blank to keep current)</span>
+              }
+            </label>
+            <input type="password" [(ngModel)]="userForm.password" class="form-control" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Role <span class="required">*</span></label>
+            <select [(ngModel)]="userForm.role_id" class="form-control">
+              <option [value]="null">Select Role</option>
+              <option *ngFor="let role of roles" [value]="role.id">{{ role.name }}</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Employee ID (optional)</label>
+            <input type="number" [(ngModel)]="userForm.employee_id" class="form-control" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">
+              <input type="checkbox" [(ngModel)]="userForm.is_active" />
+              Active
+            </label>
+          </div>
+          @if (errorMessage) {
+            <div class="alert alert-error">{{ errorMessage }}</div>
+          }
+        </div>
+        <div class="modal-footer">
+          <button class="btn-cancel" (click)="closeModal()">Cancel</button>
+          <button class="btn-save" (click)="saveUser()">{{ isEditMode ? 'Update' : 'Create' }}</button>
+        </div>
+      </div>
+    </div>
+  }
+</div>
+

@@ -64,6 +64,11 @@
         </div>
       </div>
 
+      <!-- Error Message -->
+      <div *ngIf="errorMessage" class="error-message">
+        {{ errorMessage }}
+      </div>
+
       <div class="table-section">
         <div class="table-container">
           <table class="data-table">
@@ -78,6 +83,16 @@
               </tr>
             </thead>
             <tbody>
+              <tr *ngIf="isLoading">
+                <td colspan="6" style="text-align: center; padding: 40px;">
+                  <span>Loading team score cards...</span>
+                </td>
+              </tr>
+              <tr *ngIf="!isLoading && filteredEmployees.length === 0">
+                <td colspan="6" style="text-align: center; padding: 40px; color: #999;">
+                  No team members found for this review period
+                </td>
+              </tr>
               <tr *ngFor="let employee of filteredEmployees; let i = index" 
                   class="clickable-row" 
                   (click)="viewScoreCardDetail(employee.id)">

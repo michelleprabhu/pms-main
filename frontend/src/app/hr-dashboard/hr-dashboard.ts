@@ -25,6 +25,10 @@ export class HrDashboard {
     this.router.navigate(['/review-period']);
   }
 
+  navigateToGoalsLibrary() {
+    this.router.navigate(['/goals-library']);
+  }
+
   navigateToPlanning() {
     this.router.navigate(['/planning']);
   }

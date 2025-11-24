@@ -267,12 +267,25 @@
       <div class="modal-body">
         <form class="goal-form">
           <div class="form-group">
+            <label>Select from Library Goal</label>
+            <select class="form-control" [(ngModel)]="selectedLibraryGoal" (change)="onLibraryGoalSelected()" name="libraryGoal" [disabled]="isLoadingLibraryGoals">
+              <option value="">-- Select a pre-defined goal or create custom --</option>
+              <option *ngFor="let goal of libraryGoals" [value]="goal.id">{{ goal.goal_name || goal.name }}</option>
+            </select>
+            <small *ngIf="isLoadingLibraryGoals" style="color: #666;">Loading library goals...</small>
+          </div>
+          
+          <div class="form-divider" *ngIf="libraryGoals.length > 0">
+            <span>OR Create Custom Goal</span>
+          </div>
+
+          <div class="form-group">
             <label>Name <span class="required">*</span></label>
             <input type="text" class="form-control" placeholder="Enter goal name" [(ngModel)]="newGoal.name" name="name" />
           </div>
           
           <div class="form-group">
-            <label>Description <span class="required">*</span></label>
+            <label>Description</label>
             <textarea class="form-control" rows="3" placeholder="Enter goal description" [(ngModel)]="newGoal.description" name="description"></textarea>
           </div>
 

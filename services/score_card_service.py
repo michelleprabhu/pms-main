@@ -89,3 +89,53 @@ def get_user_score_cards(user_id):
         deleted_at=None
     ).all()
 
+
+def accept_score_card(score_card_id, user_id):
+    """
+    Employee accepts the score card goals.
+    """
+    score_card = ScoreCard.query.get(score_card_id)
+    if not score_card:
+        return None
+    
+    # Update status
+    score_card.status = 'Accepted'
+    
+    # Add to history
+    history = list(score_card.approval_history) if score_card.approval_history else []
+    history.append({
+        'status': 'Accepted',
+        'user_id': user_id,
+        'timestamp': datetime.utcnow().isoformat()
+    })
+    score_card.approval_history = history
+    score_card.updated_at = datetime.utcnow()
+    
+    db.session.commit()
+    return score_card
+
+
+def reject_score_card(score_card_id, user_id, reason):
+    """
+    Employee rejects the score card goals.
+    """
+    score_card = ScoreCard.query.get(score_card_id)
+    if not score_card:
+        return None
+    
+    # Update status - usually goes back to planning or stays rejected until fixed
+    score_card.status = 'Rejected'
+    
+    # Add to history
+    history = list(score_card.approval_history) if score_card.approval_history else []
+    history.append({
+        'status': 'Rejected',
+        'user_id': user_id,
+        'reason': reason,
+        'timestamp': datetime.utcnow().isoformat()
+    })
+    score_card.approval_history = history
+    score_card.updated_at = datetime.utcnow()
+    
+    db.session.commit()
+    return score_card

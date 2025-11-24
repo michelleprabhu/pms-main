@@ -5,7 +5,7 @@
       <img *ngIf="!isSidebarCollapsed" src="assets/logo.png" alt="iDUELA" class="logo" />
       <img *ngIf="isSidebarCollapsed" src="assets/logo.png" alt="iDUELA" class="logo-small" />
     </div>
-    
+
     <nav class="sidebar-nav">
       <div class="nav-section">
         <div class="section-title" *ngIf="!isSidebarCollapsed">Home</div>
@@ -22,9 +22,9 @@
           <span class="nav-text" *ngIf="!isSidebarCollapsed">Evaluation</span>
         </div>
       </div>
-      
+
       <div class="nav-spacer"></div>
-      
+
       <div class="nav-item sign-out" (click)="signOut()">
         <span class="nav-icon"><i class="fas fa-sign-out-alt"></i></span>
         <span class="nav-text" *ngIf="!isSidebarCollapsed">Sign Out</span>
@@ -75,7 +75,7 @@
       <!-- Weightage Distribution Card (Compact) -->
       <div class="weightage-compact-card">
         <h3 class="weightage-compact-title">Performance Weightage Distribution</h3>
-        
+
         <div class="weightage-compact-row">
           <span class="weightage-compact-label">Goals:</span>
           <span class="weightage-compact-percent">60%</span>
@@ -104,22 +104,13 @@
       <!-- Tabs -->
       <div class="tabs-container">
         <div class="tabs-header">
-          <button 
-            class="tab-button" 
-            [class.active]="activeTab === 'goals'"
-            (click)="activeTab = 'goals'">
+          <button class="tab-button" [class.active]="activeTab === 'goals'" (click)="activeTab = 'goals'">
             Goals
           </button>
-          <button 
-            class="tab-button" 
-            [class.active]="activeTab === 'competencies'"
-            (click)="activeTab = 'competencies'">
+          <button class="tab-button" [class.active]="activeTab === 'competencies'" (click)="activeTab = 'competencies'">
             Competencies
           </button>
-          <button 
-            class="tab-button" 
-            [class.active]="activeTab === 'values'"
-            (click)="activeTab = 'values'">
+          <button class="tab-button" [class.active]="activeTab === 'values'" (click)="activeTab = 'values'">
             Values
           </button>
         </div>
@@ -132,22 +123,25 @@
               <h2 class="tab-title">Goals</h2>
               <span class="weightage-badge goals-badge">Goals Weightage: 60%</span>
             </div>
-            
+
             <!-- Planning Progress Card (Manager View) -->
             <div *ngIf="isPlanningPhase()" class="planning-progress-card">
               <h3 class="progress-card-title">Planning Progress</h3>
               <div class="progress-stats">
                 <div class="progress-stat">
                   <span class="stat-label badge-hr">HR:</span>
-                  <span class="stat-value">{{ getGoalsByRole('HR').length }} goals ({{ getGoalsWeightByRole('HR') }}% weight)</span>
+                  <span class="stat-value">{{ getGoalsByRole('HR').length }} goals ({{ getGoalsWeightByRole('HR') }}%
+                    weight)</span>
                 </div>
                 <div class="progress-stat">
                   <span class="stat-label badge-manager">Manager:</span>
-                  <span class="stat-value">{{ getGoalsByRole('Manager').length }} goals ({{ getGoalsWeightByRole('Manager') }}% weight)</span>
+                  <span class="stat-value">{{ getGoalsByRole('Manager').length }} goals ({{
+                    getGoalsWeightByRole('Manager') }}% weight)</span>
                 </div>
                 <div class="progress-stat">
                   <span class="stat-label badge-employee">Employee:</span>
-                  <span class="stat-value">{{ getGoalsByRole('Employee').length }} goals ({{ getGoalsWeightByRole('Employee') }}% weight)</span>
+                  <span class="stat-value">{{ getGoalsByRole('Employee').length }} goals ({{
+                    getGoalsWeightByRole('Employee') }}% weight)</span>
                 </div>
                 <div class="progress-stat total-weight">
                   <span class="stat-label"><strong>Total Weight:</strong></span>
@@ -161,11 +155,8 @@
               <button class="btn-secondary" (click)="openAddGoalModal()">
                 <i class="fas fa-plus"></i> Add Goal
               </button>
-              <button 
-                class="btn-primary" 
-                [disabled]="!canSaveAndNotify()"
-                [title]="canSaveAndNotify() ? '' : 'Total weight must equal 100%'"
-                (click)="saveAndNotify()">
+              <button class="btn-primary" [disabled]="!canSaveAndNotify()"
+                [title]="canSaveAndNotify() ? '' : 'Total weight must equal 100%'" (click)="saveAndNotify()">
                 <i class="fas fa-bell"></i> Save and Notify
               </button>
             </div>
@@ -256,9 +247,7 @@
                 </div>
               </div>
               <div class="add-comment-section">
-                <textarea 
-                  [(ngModel)]="newComment" 
-                  class="comment-input" 
+                <textarea [(ngModel)]="newComment" class="comment-input"
                   placeholder="Add a comment to the discussion...">
                 </textarea>
                 <button class="btn-primary" (click)="addComment()">
@@ -273,6 +262,11 @@
             <div class="tab-title-with-badge">
               <h2 class="tab-title">Competencies</h2>
               <span class="weightage-badge competencies-badge">Competencies Weightage: 25%</span>
+            </div>
+            <div *ngIf="isPlanningPhase()" class="planning-actions">
+              <button class="btn-secondary" (click)="openAddCompetencyModal()">
+                <i class="fas fa-plus"></i> Add Competency
+              </button>
             </div>
             <div class="data-table-container">
               <table class="data-table">
@@ -304,6 +298,11 @@
               <h2 class="tab-title">Values</h2>
               <span class="weightage-badge values-badge">Values Weightage: 15%</span>
             </div>
+            <div *ngIf="isPlanningPhase()" class="planning-actions">
+              <button class="btn-secondary" (click)="openAddValueModal()">
+                <i class="fas fa-plus"></i> Add Value
+              </button>
+            </div>
             <div class="data-table-container">
               <table class="data-table">
                 <thead>
@@ -329,3 +328,172 @@
   </div>
 </div>
 
+<!-- Add Goal Modal -->
+<div class="modal-overlay" *ngIf="showAddGoalModal" (click)="closeAddGoalModal()">
+  <div class="modal-container-responsive" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2 class="modal-title">Add New Goal</h2>
+      <button class="btn-close" (click)="closeAddGoalModal()">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    <div class="modal-body">
+      <form class="goal-form">
+        <div class="form-group">
+          <label>Select from Library Goal</label>
+          <select class="form-control" [(ngModel)]="selectedLibraryGoal" (change)="onLibraryGoalSelected()"
+            name="libraryGoal" [disabled]="isLoadingLibraryGoals">
+            <option value="">-- Select a pre-defined goal or create custom --</option>
+            <option *ngFor="let goal of libraryGoals" [value]="goal.id">{{ goal.goal_name || goal.name }}</option>
+          </select>
+          <small *ngIf="isLoadingLibraryGoals" style="color: #666;">Loading library goals...</small>
+        </div>
+
+        <div class="form-divider" *ngIf="libraryGoals.length > 0">
+          <span>OR Create Custom Goal</span>
+        </div>
+
+        <div class="form-group">
+          <label>Name <span class="required">*</span></label>
+          <input type="text" class="form-control" placeholder="Enter goal name" [(ngModel)]="newGoal.name"
+            name="name" />
+        </div>
+
+        <div class="form-group">
+          <label>Description</label>
+          <textarea class="form-control" rows="3" placeholder="Enter goal description" [(ngModel)]="newGoal.description"
+            name="description"></textarea>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Weight of Goal (%) <span class="required">*</span></label>
+            <input type="number" class="form-control" placeholder="0-100" min="0" max="100" [(ngModel)]="newGoal.weight"
+              name="weight" />
+          </div>
+          <div class="form-group">
+            <label>Status</label>
+            <select class="form-control" [(ngModel)]="newGoal.status" name="status">
+              <option value="active">Active</option>
+              <option value="not_started">Not Started</option>
+              <option value="in_progress">In Progress</option>
+              <option value="completed">Completed</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Start Date</label>
+            <input type="date" class="form-control" [(ngModel)]="newGoal.startDate" name="startDate" />
+          </div>
+          <div class="form-group">
+            <label>End Date</label>
+            <input type="date" class="form-control" [(ngModel)]="newGoal.endDate" name="endDate" />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Deadline Date</label>
+          <input type="date" class="form-control" [(ngModel)]="newGoal.deadlineDate" name="deadlineDate" />
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn-cancel" (click)="closeAddGoalModal()">Cancel</button>
+          <button type="button" class="btn-save" (click)="addGoal()">Add Goal</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Add Competency Modal -->
+<div class="modal-overlay" *ngIf="showAddCompetencyModal" (click)="closeAddCompetencyModal()">
+  <div class="modal-container" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2 class="modal-title">Add Competency</h2>
+      <button class="btn-close" (click)="closeAddCompetencyModal()">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    <div class="modal-body">
+      <form>
+        <div class="form-group">
+          <label>Select from Library</label>
+          <select class="form-control" [(ngModel)]="selectedLibraryCompetency" (change)="onLibraryCompetencySelected()"
+            name="libraryComp" [disabled]="isLoadingLibraryCompetencies">
+            <option value="">-- Select a competency or create custom --</option>
+            <option *ngFor="let comp of libraryCompetencies" [value]="comp.id">{{ comp.competency_name }}</option>
+          </select>
+        </div>
+
+        <div class="form-divider"><span>OR Create Custom</span></div>
+
+        <div class="form-group">
+          <label>Name <span class="required">*</span></label>
+          <input type="text" class="form-control" [(ngModel)]="newCompetency.name" name="compName"
+            placeholder="Competency Name" />
+        </div>
+
+        <div class="form-group">
+          <label>Description</label>
+          <textarea class="form-control" rows="3" [(ngModel)]="newCompetency.description" name="compDesc"
+            placeholder="Description"></textarea>
+        </div>
+
+        <div class="form-group">
+          <label>Target Level</label>
+          <input type="text" class="form-control" [(ngModel)]="newCompetency.targetLevel" name="compLevel"
+            placeholder="e.g. Intermediate" />
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn-cancel" (click)="closeAddCompetencyModal()">Cancel</button>
+          <button type="button" class="btn-save" (click)="addCompetency()">Add Competency</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Add Value Modal -->
+<div class="modal-overlay" *ngIf="showAddValueModal" (click)="closeAddValueModal()">
+  <div class="modal-container" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2 class="modal-title">Add Value</h2>
+      <button class="btn-close" (click)="closeAddValueModal()">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    <div class="modal-body">
+      <form>
+        <div class="form-group">
+          <label>Select from Library</label>
+          <select class="form-control" [(ngModel)]="selectedLibraryValue" (change)="onLibraryValueSelected()"
+            name="libraryVal" [disabled]="isLoadingLibraryValues">
+            <option value="">-- Select a value or create custom --</option>
+            <option *ngFor="let val of libraryValues" [value]="val.id">{{ val.value_name || val.name }}</option>
+          </select>
+        </div>
+
+        <div class="form-divider"><span>OR Create Custom</span></div>
+
+        <div class="form-group">
+          <label>Name <span class="required">*</span></label>
+          <input type="text" class="form-control" [(ngModel)]="newValue.name" name="valName" placeholder="Value Name" />
+        </div>
+
+        <div class="form-group">
+          <label>Description</label>
+          <textarea class="form-control" rows="3" [(ngModel)]="newValue.description" name="valDesc"
+            placeholder="Description"></textarea>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn-cancel" (click)="closeAddValueModal()">Cancel</button>
+          <button type="button" class="btn-save" (click)="addValue()">Add Value</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

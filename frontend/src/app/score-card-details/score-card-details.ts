@@ -1,8 +1,9 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { Router, ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { GoalsLibraryService } from '../../services/goals-library.service';
 
 interface ScoreCard {
   employeeName: string;
@@ -54,7 +55,25 @@ export class ScoreCardDetails implements OnInit {
   scoreCard: ScoreCard | null = null;
   scoreCardId: number = 0;
   newComment: string = '';
-  apiUrl = 'http://localhost:5002/api';
+  apiUrl = 'http://localhost:5003/api';
+  employeeInfo: any = null;
+
+  // Add Goal Modal
+  showAddGoalModal: boolean = false;
+  selectedLibraryGoal: string = '';
+  libraryGoals: any[] = [];
+  isLoadingLibraryGoals = false;
+  private goalsLibraryService = inject(GoalsLibraryService);
+
+  newGoal = {
+    name: '',
+    description: '',
+    status: '',
+    weight: 0,
+    startDate: '',
+    endDate: '',
+    deadlineDate: ''
+  };
   goalsWeightage: number = 60;
   competenciesWeightage: number = 25;
   valuesWeightage: number = 15;
@@ -64,149 +83,66 @@ export class ScoreCardDetails implements OnInit {
     Employee: { count: 0, total_weight: 0 },
     total_weight: 0
   };
-  
+
   goals: Goal[] = [];
 
-  planningComments: PlanningComment[] = [
-    {
-      id: 1,
-      role: 'HR',
-      text: 'Initial goals have been set. Please review and provide feedback.',
-      timestamp: new Date('2025-01-05T10:00:00')
-    },
-    {
-      id: 2,
-      role: 'Manager',
-      text: 'Added team development goal. Employee can add their own goals as well.',
-      timestamp: new Date('2025-01-06T14:30:00')
-    }
-  ];
+  planningComments: PlanningComment[] = [];
 
-  competencies: Competency[] = [
-    {
-      name: 'Software Development',
-      description: 'Proficiency in coding, debugging, and software design patterns',
-      minLevel: 3,
-      maxLevel: 5
-    },
-    {
-      name: 'Code Review & Quality',
-      description: 'Ability to conduct thorough code reviews and maintain code quality standards',
-      minLevel: 3,
-      maxLevel: 5
-    },
-    {
-      name: 'System Design & Architecture',
-      description: 'Design scalable and maintainable system architectures',
-      minLevel: 3,
-      maxLevel: 5
-    },
-    {
-      name: 'DevOps & CI/CD',
-      description: 'Knowledge of deployment pipelines, containerization, and cloud platforms',
-      minLevel: 2,
-      maxLevel: 5
-    },
-    {
-      name: 'Database Management',
-      description: 'Proficiency in SQL/NoSQL databases, query optimization, and data modeling',
-      minLevel: 3,
-      maxLevel: 5
-    },
-    {
-      name: 'API Development',
-      description: 'Design and implement RESTful APIs and microservices',
-      minLevel: 3,
-      maxLevel: 5
-    },
-    {
-      name: 'Testing & QA',
-      description: 'Unit testing, integration testing, and test automation',
-      minLevel: 3,
-      maxLevel: 5
-    },
-    {
-      name: 'Version Control (Git)',
-      description: 'Proficiency in Git workflows, branching strategies, and collaboration',
-      minLevel: 4,
-      maxLevel: 5
-    },
-    {
-      name: 'Agile Methodologies',
-      description: 'Understanding of Scrum, Kanban, and agile development practices',
-      minLevel: 3,
-      maxLevel: 5
-    },
-    {
-      name: 'Problem Solving',
-      description: 'Analytical thinking and debugging complex technical issues',
-      minLevel: 4,
-      maxLevel: 5
-    },
-    {
-      name: 'Communication',
-      description: 'Clear technical communication with team members and stakeholders',
-      minLevel: 3,
-      maxLevel: 5
-    },
-    {
-      name: 'Leadership & Mentoring',
-      description: 'Ability to mentor junior developers and lead technical initiatives',
-      minLevel: 2,
-      maxLevel: 5
-    }
-  ];
+  competencies: Competency[] = [];
 
-  values: Value[] = [
-    {
-      name: 'Integrity',
-      description: 'Demonstrates honesty and strong moral principles'
-    },
-    {
-      name: 'Innovation',
-      description: 'Brings creative solutions and new ideas'
-    },
-    {
-      name: 'Collaboration',
-      description: 'Works well with team members and stakeholders'
-    },
-    {
-      name: 'Customer Focus',
-      description: 'Prioritizes customer needs and satisfaction'
-    },
-    {
-      name: 'Accountability',
-      description: 'Takes ownership of work and commitments'
-    },
-    {
-      name: 'Continuous Learning',
-      description: 'Actively seeks to improve skills and knowledge'
-    }
-  ];
+  values: Value[] = [];
 
   constructor(private router: Router, private route: ActivatedRoute, private http: HttpClient) {
-    // Set default score card if none provided
-    this.scoreCard = {
-      employeeName: 'John Doe',
-      reviewPeriod: 'Q1 2025',
-      status: 'Plan Started'
-    };
+    // Initialize with null - will be loaded from API
+    this.scoreCard = null;
   }
 
   ngOnInit() {
     this.route.queryParams.subscribe(params => {
-      this.scoreCardId = +params['id'] || 1;
-      const reviewPeriod = params['reviewPeriod'] || 'Q1 2025';
-      
-      // Load goals from backend
-      this.loadGoals();
-      
-      // Set default score card info
-      this.scoreCard = {
-        employeeName: 'John Doe',
-        reviewPeriod: reviewPeriod,
-        status: 'Plan Started'
-      };
+      this.scoreCardId = +params['id'] || 0;
+      if (this.scoreCardId) {
+        this.loadScoreCardDetails();
+        this.loadGoals();
+      }
+    });
+  }
+
+  loadScoreCardDetails() {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+
+    const headers = new HttpHeaders({
+      'Authorization': `Bearer ${token}`
+    });
+
+    this.http.get(`${this.apiUrl}/score-cards/${this.scoreCardId}`, { headers }).subscribe({
+      next: (response: any) => {
+        console.log('Score card details:', response);
+
+        // Update weightage
+        this.goalsWeightage = response.goals_weightage || 60;
+        this.competenciesWeightage = response.competencies_weightage || 25;
+        this.valuesWeightage = response.values_weightage || 15;
+
+        // Update score card info
+        this.scoreCard = {
+          employeeName: response.employee?.full_name || 'Unknown',
+          reviewPeriod: response.review_period?.period_name || 'N/A',
+          status: response.status || 'planning'
+        };
+
+        // Store employee info for display
+        this.employeeInfo = response.employee;
+      },
+      error: (err) => {
+        console.error('Failed to load score card details:', err);
+        // Fallback to default
+        this.scoreCard = {
+          employeeName: 'Unknown',
+          reviewPeriod: 'N/A',
+          status: 'planning'
+        };
+      }
     });
   }
 
@@ -233,7 +169,7 @@ export class ScoreCardDetails implements OnInit {
       next: (response: any) => {
         this.goalsWeightage = response.goals_weightage || this.goalsWeightage;
         this.planningProgress = response.planning_progress;
-        
+
         // Map backend response to frontend format
         this.goals = response.goals.map((goal: any) => ({
           id: goal.id,
@@ -290,7 +226,7 @@ export class ScoreCardDetails implements OnInit {
 
   isPlanningPhase(): boolean {
     if (!this.scoreCard) return false;
-    const planningStatuses = ['Plan Started', 'Planning in Progress', 'Pending Employee Acceptance'];
+    const planningStatuses = ['planning', 'Plan Started', 'Planning in Progress', 'Pending Employee Acceptance', 'pending_acceptance'];
     return planningStatuses.includes(this.scoreCard.status);
   }
 
@@ -450,6 +386,115 @@ export class ScoreCardDetails implements OnInit {
 
   showAcceptRejectButtons(): boolean {
     return this.scoreCardId === 1 && this.scoreCard?.status === 'Pending Employee Acceptance';
+  }
+
+  openAddGoalModal() {
+    console.log('[DEBUG] openAddGoalModal called');
+    console.log('[DEBUG] Setting showAddGoalModal to true');
+    this.showAddGoalModal = true;
+    console.log('[DEBUG] showAddGoalModal is now:', this.showAddGoalModal);
+    this.loadLibraryGoals();
+    this.resetGoalForm();
+    console.log('[DEBUG] Modal should be visible now');
+  }
+
+  closeAddGoalModal() {
+    this.showAddGoalModal = false;
+    this.resetGoalForm();
+  }
+
+  resetGoalForm() {
+    this.newGoal = {
+      name: '',
+      description: '',
+      status: '',
+      weight: 0,
+      startDate: '',
+      endDate: '',
+      deadlineDate: ''
+    };
+    this.selectedLibraryGoal = '';
+  }
+
+  loadLibraryGoals() {
+    this.isLoadingLibraryGoals = true;
+    this.goalsLibraryService.getAllGoals().subscribe({
+      next: (goals: any) => {
+        this.libraryGoals = goals || [];
+        this.isLoadingLibraryGoals = false;
+      },
+      error: (err) => {
+        console.error('Failed to load library goals:', err);
+        this.libraryGoals = [];
+        this.isLoadingLibraryGoals = false;
+      }
+    });
+  }
+
+  onLibraryGoalSelected() {
+    if (this.selectedLibraryGoal) {
+      const goal = this.libraryGoals.find(g => g.id === +this.selectedLibraryGoal);
+      if (goal) {
+        this.newGoal.name = goal.goal_name || goal.name;
+        this.newGoal.description = goal.description || '';
+        this.newGoal.weight = goal.suggested_weight ? parseInt(goal.suggested_weight) : 0;
+      }
+    } else {
+      this.newGoal.name = '';
+      this.newGoal.description = '';
+      this.newGoal.weight = 0;
+    }
+  }
+
+  addGoal() {
+    if (!this.newGoal.name || !this.newGoal.weight) {
+      alert('Please fill in goal name and weight');
+      return;
+    }
+
+    if (!this.scoreCardId) {
+      alert('No score card ID found');
+      return;
+    }
+
+    const token = localStorage.getItem('token');
+    if (!token) {
+      alert('Not authenticated');
+      return;
+    }
+
+    const headers = new HttpHeaders({
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    });
+
+    const payload: any = {
+      goal_name: this.newGoal.name,
+      description: this.newGoal.description || null,
+      weight: this.newGoal.weight
+    };
+
+    if (this.selectedLibraryGoal) {
+      payload.library_goal_id = parseInt(this.selectedLibraryGoal);
+    }
+
+    if (this.newGoal.startDate) payload.start_date = this.newGoal.startDate;
+    if (this.newGoal.endDate) payload.end_date = this.newGoal.endDate;
+    if (this.newGoal.deadlineDate) payload.deadline_date = this.newGoal.deadlineDate;
+    if (this.newGoal.status) payload.status = this.newGoal.status;
+
+    this.http.post(`${this.apiUrl}/score-cards/${this.scoreCardId}/goals`, payload, { headers })
+      .subscribe({
+        next: (response: any) => {
+          alert('Goal added successfully!');
+          this.closeAddGoalModal();
+          this.loadGoals(); // Reload goals list
+        },
+        error: (err) => {
+          console.error('Error adding goal:', err);
+          alert(err.error?.error || 'Failed to add goal. Please try again.');
+        }
+      });
   }
 
   signOut() {

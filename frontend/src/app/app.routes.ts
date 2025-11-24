@@ -40,6 +40,8 @@ import { HrPositionsComponent } from './hr-positions/hr-positions';
 import { HrReportsComponent } from './hr-reports/hr-reports';
 import { PermissionGuard } from '../guards/permission.guard';
 import { HrPermissionsComponent } from './hr-permissions/hr-permissions';
+import { HrUsersComponent } from './hr-users/hr-users';
+import { GoalsLibraryComponent } from './goals-library/goals-library';
 
 export const routes: Routes = [
   { path: '', redirectTo: '/login', pathMatch: 'full' },
@@ -57,8 +59,8 @@ export const routes: Routes = [
   { path: 'evaluation', component: EvaluationComponent },
   { path: 'evaluation-details', component: EvaluationDetailsComponent },
   { path: 'manager-dashboard', component: ManagerDashboard, data: { permissions: ['view_manager_dashboard'] }, canActivate: [PermissionGuard] },
-  { path: 'manager-score-cards', component: ManagerScoreCardsComponent },
-  { path: 'manager-score-cards/list', component: ManagerScoreCardsListComponent },
+  { path: 'manager-score-cards', component: ManagerScoreCardsComponent, data: { permissions: ['view_team_score_cards'] }, canActivate: [PermissionGuard] },
+  { path: 'manager-score-cards/list', component: ManagerScoreCardsListComponent, data: { permissions: ['view_team_score_cards'] }, canActivate: [PermissionGuard] },
   { path: 'manager-score-cards/employee-detail/:id', component: ManagerScoreCardEmployeeDetailComponent },
   { path: 'manager-score-card-details', component: ManagerScoreCardDetailsComponent },
   { path: 'manager-evaluation-periods', component: ManagerEvaluationPeriodsComponent },
@@ -82,8 +84,10 @@ export const routes: Routes = [
   { path: 'hr-employees/view/:id', component: HrEmployeeViewComponent, data: { permissions: ['view_hr_employees_page'] }, canActivate: [PermissionGuard] },
   { path: 'hr-departments', component: HrDepartmentsComponent, data: { permissions: ['view_hr_departments_page'] }, canActivate: [PermissionGuard] },
   { path: 'hr-positions', component: HrPositionsComponent, data: { permissions: ['view_hr_positions_page'] }, canActivate: [PermissionGuard] },
+  { path: 'hr-users', component: HrUsersComponent, data: { permissions: ['view_hr_management_page'] }, canActivate: [PermissionGuard] },
   { path: 'hr-reports', component: HrReportsComponent, data: { permissions: ['view_hr_reports_page'] }, canActivate: [PermissionGuard] },
   { path: 'hr-permissions', component: HrPermissionsComponent, data: { permissions: ['manage_permissions'] }, canActivate: [PermissionGuard] },
+  { path: 'goals-library', component: GoalsLibraryComponent, data: { permissions: ['view_hr_management_page'] }, canActivate: [PermissionGuard] },
   { path: 'planning/eligibility-profiles', loadComponent: () => import('./eligibility-profiles/eligibility-profiles').then(m => m.EligibilityProfilesComponent), data: { permissions: ['generate_score_cards'] }, canActivate: [PermissionGuard] },
   { path: '**', redirectTo: '/login' }
 ];

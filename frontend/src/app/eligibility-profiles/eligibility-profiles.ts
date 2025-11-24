@@ -37,7 +37,7 @@ interface Position {
   styleUrls: ['./eligibility-profiles.css']
 })
 export class EligibilityProfilesComponent implements OnInit {
-  private apiUrl = 'http://localhost:5002/api';
+  private apiUrl = 'http://localhost:5003/api';
 
   profiles: EligibilityProfile[] = [];
   departments: Department[] = [];

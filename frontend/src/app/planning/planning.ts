@@ -58,7 +58,7 @@ export class PlanningComponent implements OnInit {
   };
 
   generatedEmployees: GeneratedEmployee[] = [];
-  private apiUrl = 'http://localhost:5002/api';
+  private apiUrl = 'http://localhost:5003/api';
 
   activeReviewPeriods: ReviewPeriod[] = [];
 

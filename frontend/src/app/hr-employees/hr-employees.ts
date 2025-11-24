@@ -1,15 +1,18 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
+import { EmployeeService } from '../../services/employee.service';
 
 interface Employee {
-  id: string;
-  fullName: string;
-  position: string;
-  department: string;
-  manager: string | null;
-  joiningDate: string;
-  status: 'Active' | 'Inactive';
+  id: number;
+  employee_id: string;
+  full_name: string;
+  position?: { title: string } | null;
+  department?: { name: string } | null;
+  reporting_manager?: { full_name: string } | null;
+  joining_date: string;
+  is_active: boolean;
+  employment_status: string;
 }
 
 @Component({
@@ -19,34 +22,45 @@ interface Employee {
   templateUrl: './hr-employees.html',
   styleUrls: ['./hr-employees.css']
 })
-export class HrEmployeesComponent {
+export class HrEmployeesComponent implements OnInit {
   isSidebarCollapsed = false;
   activeTab: 'all' | 'active' | 'inactive' = 'all';
+  allEmployees: Employee[] = [];
+  isLoading = false;
+  errorMessage = '';
 
-  allEmployees: Employee[] = [
-    { id: 'EMP001', fullName: 'John Smith', position: 'Senior Manager', department: 'Sales', manager: null, joiningDate: '2020-01-15', status: 'Active' },
-    { id: 'EMP002', fullName: 'Sarah Johnson', position: 'Developer', department: 'IT', manager: 'John Smith', joiningDate: '2021-03-20', status: 'Active' },
-    { id: 'EMP003', fullName: 'Anna Lee', position: 'HR Specialist', department: 'HR', manager: 'John Smith', joiningDate: '2019-11-10', status: 'Active' },
-    { id: 'EMP004', fullName: 'Mike Brown', position: 'Account Manager', department: 'Sales', manager: 'John Smith', joiningDate: '2020-07-05', status: 'Active' },
-    { id: 'EMP005', fullName: 'David Wilson', position: 'QA Analyst', department: 'IT', manager: 'Sarah Johnson', joiningDate: '2021-08-15', status: 'Active' },
-    { id: 'EMP006', fullName: 'Emily Davis', position: 'Designer', department: 'IT', manager: 'Sarah Johnson', joiningDate: '2022-01-10', status: 'Active' },
-    { id: 'EMP007', fullName: 'Robert Taylor', position: 'Sales Executive', department: 'Sales', manager: 'Mike Brown', joiningDate: '2021-05-20', status: 'Active' },
-    { id: 'EMP008', fullName: 'Maria Garcia', position: 'Operations Manager', department: 'Operations', manager: null, joiningDate: '2019-09-01', status: 'Active' },
-    { id: 'EMP009', fullName: 'James Anderson', position: 'Developer', department: 'IT', manager: 'Sarah Johnson', joiningDate: '2022-04-15', status: 'Active' },
-    { id: 'EMP010', fullName: 'Jennifer Martinez', position: 'Sales Executive', department: 'Sales', manager: 'Mike Brown', joiningDate: '2020-12-01', status: 'Inactive' },
-    { id: 'EMP011', fullName: 'William Rodriguez', position: 'HR Specialist', department: 'HR', manager: 'Anna Lee', joiningDate: '2021-02-28', status: 'Inactive' },
-    { id: 'EMP012', fullName: 'Lisa Thompson', position: 'QA Analyst', department: 'IT', manager: 'Sarah Johnson', joiningDate: '2019-06-15', status: 'Inactive' }
-  ];
+  constructor(
+    private router: Router,
+    private employeeService: EmployeeService
+  ) {}
 
-  constructor(private router: Router) {}
+  ngOnInit() {
+    this.loadEmployees();
+  }
+
+  loadEmployees() {
+    this.isLoading = true;
+    this.errorMessage = '';
+    this.employeeService.getAllEmployees(true).subscribe({
+      next: (employees: Employee[]) => {
+        this.allEmployees = employees;
+        this.isLoading = false;
+      },
+      error: (error) => {
+        console.error('Error loading employees:', error);
+        this.errorMessage = 'Failed to load employees. Please try again.';
+        this.isLoading = false;
+      }
+    });
+  }
 
   get filteredEmployees(): Employee[] {
     if (this.activeTab === 'all') {
       return this.allEmployees;
     } else if (this.activeTab === 'active') {
-      return this.allEmployees.filter(emp => emp.status === 'Active');
+      return this.allEmployees.filter(emp => emp.is_active && emp.employment_status === 'Active');
     } else {
-      return this.allEmployees.filter(emp => emp.status === 'Inactive');
+      return this.allEmployees.filter(emp => !emp.is_active || emp.employment_status !== 'Active');
     }
   }
 
@@ -90,17 +104,25 @@ export class HrEmployeesComponent {
     this.router.navigate(['/hr-employees/add']);
   }
 
-  viewEmployee(id: string) {
+  viewEmployee(id: number) {
     this.router.navigate(['/hr-employees/view', id]);
   }
 
-  editEmployee(id: string) {
+  editEmployee(id: number) {
     this.router.navigate(['/hr-employees/edit', id]);
   }
 
-  deleteEmployee(id: string) {
+  deleteEmployee(id: number) {
     if (confirm('Are you sure you want to delete this employee?')) {
-      this.allEmployees = this.allEmployees.filter(emp => emp.id !== id);
+      this.employeeService.deleteEmployee(id).subscribe({
+        next: () => {
+          this.loadEmployees(); // Reload list
+        },
+        error: (error) => {
+          console.error('Error deleting employee:', error);
+          alert('Failed to delete employee. Please try again.');
+        }
+      });
     }
   }
 

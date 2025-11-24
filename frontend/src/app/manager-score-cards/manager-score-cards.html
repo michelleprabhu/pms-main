@@ -50,11 +50,21 @@
     <div class="content">
       <h1 class="page-title">Active Score Cards - Select Review Period</h1>
 
+      <!-- Error Message -->
+      <div *ngIf="errorMessage" class="error-message">
+        {{ errorMessage }}
+      </div>
+
+      <!-- Loading State -->
+      <div *ngIf="isLoading" style="text-align: center; padding: 40px;">
+        <span>Loading review periods...</span>
+      </div>
+
       <!-- Active Review Periods -->
-      <div class="review-periods-section">
+      <div class="review-periods-section" *ngIf="!isLoading">
         <h2 class="section-heading">Active Review Periods</h2>
 
-        <div class="periods-grid">
+        <div class="periods-grid" *ngIf="activeReviewPeriods.length > 0">
           <div class="period-card" *ngFor="let period of activeReviewPeriods">
             <div class="period-header">
               <h3 class="period-name">{{ period.name }}</h3>
@@ -75,15 +85,15 @@
             </button>
           </div>
 
-          <!-- My Score Card -->
-          <div class="period-card">
+          <!-- My Score Card - Show for active period if exists -->
+          <div class="period-card" *ngIf="activeReviewPeriods.length > 0">
             <div class="period-header">
               <h3 class="period-name">My Score Card</h3>
               <span class="status-badge active">Active</span>
             </div>
             <div class="period-dates">
               <i class="fas fa-calendar"></i>
-              <span>Jan 1, 2025 - Mar 31, 2025</span>
+              <span>{{ activeReviewPeriods[0].startDate }} - {{ activeReviewPeriods[0].endDate }}</span>
             </div>
             <div class="period-stats">
               <div class="stat-item">
@@ -96,10 +106,13 @@
             </button>
           </div>
         </div>
+        <div *ngIf="activeReviewPeriods.length === 0" style="text-align: center; padding: 40px; color: #999;">
+          No active review periods found
+        </div>
       </div>
 
       <!-- Completed Review Periods -->
-      <div class="review-periods-section">
+      <div class="review-periods-section" *ngIf="!isLoading">
         <h2 class="section-heading">Completed Review Periods</h2>
         <div class="table-container">
           <table class="periods-table">
@@ -115,6 +128,11 @@
               </tr>
             </thead>
             <tbody>
+              <tr *ngIf="completedReviewPeriods.length === 0">
+                <td colspan="7" style="text-align: center; padding: 40px; color: #999;">
+                  No completed review periods found
+                </td>
+              </tr>
               <tr *ngFor="let period of completedReviewPeriods; let i = index" class="clickable-row" (click)="viewScoreCardsByPeriod(period.id)">
                 <td>{{ i + 1 }}</td>
                 <td>{{ period.name }}</td>

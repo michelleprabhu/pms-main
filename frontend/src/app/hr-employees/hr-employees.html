@@ -121,32 +121,54 @@
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let employee of filteredEmployees">
-              <td>{{ employee.id }}</td>
-              <td>{{ employee.fullName }}</td>
-              <td>{{ employee.position }}</td>
-              <td>{{ employee.department }}</td>
-              <td>{{ employee.manager || 'None' }}</td>
-              <td>{{ employee.joiningDate }}</td>
-              <td>
-                <span class="status-badge" [class.status-active]="employee.status === 'Active'" [class.status-inactive]="employee.status === 'Inactive'">
-                  {{ employee.status }}
-                </span>
-              </td>
-              <td>
-                <div class="action-buttons">
-                  <button class="btn-icon btn-view" (click)="viewEmployee(employee.id)" title="View">
-                    <i class="fas fa-eye"></i>
-                  </button>
-                  <button class="btn-icon btn-edit" (click)="editEmployee(employee.id)" title="Edit">
-                    <i class="fas fa-pencil"></i>
-                  </button>
-                  <button class="btn-icon btn-delete" (click)="deleteEmployee(employee.id)" title="Delete">
-                    <i class="fas fa-trash"></i>
-                  </button>
-                </div>
-              </td>
-            </tr>
+            @if (isLoading) {
+              <tr>
+                <td colspan="8" style="text-align: center; padding: 40px;">
+                  <span>Loading employees...</span>
+                </td>
+              </tr>
+            } @else if (errorMessage) {
+              <tr>
+                <td colspan="8" style="text-align: center; padding: 40px; color: #dc3545;">
+                  <span>{{ errorMessage }}</span>
+                </td>
+              </tr>
+            } @else if (filteredEmployees.length === 0) {
+              <tr>
+                <td colspan="8" style="text-align: center; padding: 40px; color: #999;">
+                  <span>No employees found</span>
+                </td>
+              </tr>
+            } @else {
+              @for (employee of filteredEmployees; track employee.id) {
+                <tr>
+                  <td>{{ employee.employee_id }}</td>
+                  <td>{{ employee.full_name }}</td>
+                  <td>{{ employee.position?.title || 'N/A' }}</td>
+                  <td>{{ employee.department?.name || 'N/A' }}</td>
+                  <td>{{ employee.reporting_manager?.full_name || 'None' }}</td>
+                  <td>{{ employee.joining_date | date:'shortDate' }}</td>
+                  <td>
+                    <span class="status-badge" [class.status-active]="employee.is_active && employee.employment_status === 'Active'" [class.status-inactive]="!employee.is_active || employee.employment_status !== 'Active'">
+                      {{ employee.employment_status }}
+                    </span>
+                  </td>
+                  <td>
+                    <div class="action-buttons">
+                      <button class="btn-icon btn-view" (click)="viewEmployee(employee.id)" title="View">
+                        <i class="fas fa-eye"></i>
+                      </button>
+                      <button class="btn-icon btn-edit" (click)="editEmployee(employee.id)" title="Edit">
+                        <i class="fas fa-pencil"></i>
+                      </button>
+                      <button class="btn-icon btn-delete" (click)="deleteEmployee(employee.id)" title="Delete">
+                        <i class="fas fa-trash"></i>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              }
+            }
           </tbody>
         </table>
       </div>

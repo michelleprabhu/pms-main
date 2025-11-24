@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 
 interface ScoreCardEmployee {
   id: number;
@@ -9,6 +10,7 @@ interface ScoreCardEmployee {
   department: string;
   position: string;
   scoreCardStatus: string;
+  scoreCardId?: number;
 }
 
 @Component({
@@ -23,22 +25,87 @@ export class ManagerScoreCardsListComponent implements OnInit {
   periodId: number = 1;
   reviewPeriodName: string = 'Q1 2025';
   searchQuery: string = '';
-  
-  // Manager's direct reports only (3 employees)
-  employees: ScoreCardEmployee[] = [
-    { id: 1, name: 'Sarah Johnson', department: 'Engineering', position: 'Software Engineer', scoreCardStatus: 'Plan Finalized' },
-    { id: 2, name: 'Michael Chen', department: 'Engineering', position: 'Frontend Developer', scoreCardStatus: 'Planning in Progress' },
-    { id: 3, name: 'Emily Rodriguez', department: 'Engineering', position: 'Backend Developer', scoreCardStatus: 'Plan Not Started' }
-  ];
+  employees: ScoreCardEmployee[] = [];
+  isLoading = false;
+  errorMessage = '';
+  private apiUrl = 'http://localhost:5003/api';
 
-  constructor(private router: Router, private route: ActivatedRoute) {}
+  constructor(
+    private router: Router, 
+    private route: ActivatedRoute,
+    private http: HttpClient
+  ) {}
 
   ngOnInit() {
     this.route.queryParams.subscribe(params => {
       this.periodId = +params['periodId'] || 1;
-      // Set review period name based on ID
-      this.reviewPeriodName = this.getReviewPeriodName(this.periodId);
+      this.loadEmployees();
     });
+  }
+
+  loadEmployees() {
+    this.isLoading = true;
+    this.errorMessage = '';
+    
+    const token = localStorage.getItem('token');
+    if (!token) {
+      this.errorMessage = 'No authentication token found';
+      this.isLoading = false;
+      return;
+    }
+
+    const headers = new HttpHeaders({
+      'Authorization': `Bearer ${token}`
+    });
+
+    const url = `${this.apiUrl}/score-cards/manager/my-team${this.periodId ? `?review_period_id=${this.periodId}` : ''}`;
+    console.log('Loading team score cards from:', url);
+
+    this.http.get(url, { headers }).subscribe({
+      next: (response: any) => {
+        if (response.score_cards && Array.isArray(response.score_cards)) {
+          this.employees = response.score_cards.map((sc: any) => ({
+            id: sc.employee_id,
+            name: sc.employee?.full_name || 'Unknown',
+            department: sc.employee?.department?.name || 'N/A',
+            position: sc.employee?.position?.title || 'N/A',
+            scoreCardStatus: this.mapStatusToDisplay(sc.status),
+            scoreCardId: sc.id
+          }));
+          
+          // Set review period name from first score card if available
+          if (this.employees.length > 0 && response.score_cards[0]?.review_period) {
+            this.reviewPeriodName = response.score_cards[0].review_period.period_name;
+          } else {
+            this.reviewPeriodName = this.getReviewPeriodName(this.periodId);
+          }
+        } else {
+          this.employees = [];
+        }
+        this.isLoading = false;
+      },
+      error: (err) => {
+        console.error('Failed to load team score cards:', err);
+        this.errorMessage = err.error?.error || 'Failed to load team score cards';
+        this.isLoading = false;
+        if (err.status === 401) {
+          this.router.navigate(['/login']);
+        }
+      }
+    });
+  }
+
+  mapStatusToDisplay(status: string): string {
+    const statusMap: { [key: string]: string } = {
+      'planning': 'Planning in Progress',
+      'plan_finalized': 'Plan Finalized',
+      'pending_acceptance': 'Pending Employee Acceptance',
+      'evaluation_started': 'Evaluation Started',
+      'pending_manager_evaluation': 'Pending Manager Evaluation',
+      'pending_hr_evaluation': 'Pending HR Evaluation',
+      'evaluation_complete': 'Evaluation Complete'
+    };
+    return statusMap[status] || status;
   }
 
   getReviewPeriodName(id: number): string {
@@ -72,7 +139,20 @@ export class ManagerScoreCardsListComponent implements OnInit {
   }
 
   viewScoreCardDetail(employeeId: number) {
-    this.router.navigate(['/manager-score-cards/employee-detail', employeeId], { queryParams: { periodId: this.periodId } });
+    // Find the score card ID for this employee
+    const employee = this.employees.find(emp => emp.id === employeeId);
+    if (employee && employee.scoreCardId) {
+      this.router.navigate(['/manager-score-cards/employee-detail', employeeId], { 
+        queryParams: { 
+          periodId: this.periodId,
+          scoreCardId: employee.scoreCardId
+        } 
+      });
+    } else {
+      this.router.navigate(['/manager-score-cards/employee-detail', employeeId], { 
+        queryParams: { periodId: this.periodId } 
+      });
+    }
   }
 
   get filteredEmployees() {

@@ -27,7 +27,7 @@ export class ScoreCardsListComponent implements OnInit {
   searchQuery: string = '';
   
   employees: ScoreCardEmployee[] = [];
-  apiUrl = 'http://localhost:5002/api';
+  apiUrl = 'http://localhost:5003/api';
 
   constructor(private router: Router, private route: ActivatedRoute, private http: HttpClient) {}
 
@@ -38,8 +38,33 @@ export class ScoreCardsListComponent implements OnInit {
       // Always default to 2 (the active review period) if no periodId provided
       this.periodId = periodIdParam ? +periodIdParam : 2;
       
-      this.reviewPeriodName = this.getReviewPeriodName(this.periodId);
+      // Always load review period name first, then load employees
+      this.loadReviewPeriodNameFirst();
       this.loadEmployees();
+    });
+  }
+
+  loadReviewPeriodNameFirst() {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+
+    const headers = new HttpHeaders({
+      'Authorization': `Bearer ${token}`
+    });
+
+    // Always load review period name regardless of whether employees exist
+    this.http.get(`${this.apiUrl}/review-periods/${this.periodId}`, { headers }).subscribe({
+      next: (period: any) => {
+        if (period.period_name) {
+          this.reviewPeriodName = period.period_name;
+        } else {
+          this.reviewPeriodName = `Period ${this.periodId}`;
+        }
+      },
+      error: (err) => {
+        console.error('Failed to load review period name:', err);
+        this.reviewPeriodName = `Period ${this.periodId}`;
+      }
     });
   }
 
@@ -72,6 +97,12 @@ export class ScoreCardsListComponent implements OnInit {
             scoreCardStatus: sc.status || 'planning',
             scoreCardId: sc.id
           }));
+          
+          // Review period name should already be loaded, but update if we have better data
+          if (this.employees.length > 0 && response[0]?.review_period?.period_name) {
+            this.reviewPeriodName = response[0].review_period.period_name;
+          }
+          
           console.log(`Loaded ${this.employees.length} employees:`, this.employees);
         } else {
           console.error('Unexpected response format:', response);
@@ -92,14 +123,24 @@ export class ScoreCardsListComponent implements OnInit {
     });
   }
 
+  loadReviewPeriodName(periodId: number, headers: HttpHeaders) {
+    this.http.get(`${this.apiUrl}/review-periods/${periodId}`, { headers }).subscribe({
+      next: (period: any) => {
+        if (period.period_name) {
+          this.reviewPeriodName = period.period_name;
+        }
+      },
+      error: (err) => {
+        console.error('Failed to load review period name:', err);
+        // Fallback to default
+        this.reviewPeriodName = `Period ${periodId}`;
+      }
+    });
+  }
+
   getReviewPeriodName(id: number): string {
-    const periods: { [key: number]: string } = {
-      1: 'Q1 2025',
-      2: 'Q1 2024',
-      3: 'Q1 2023',
-      4: 'Q1 2022'
-    };
-    return periods[id] || 'Q1 2025';
+    // This is now only used as fallback, actual name comes from API
+    return this.reviewPeriodName || `Period ${id}`;
   }
 
   toggleSidebar() {

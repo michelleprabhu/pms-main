@@ -1,7 +1,10 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
+import { EmployeeService } from '../../services/employee.service';
+import { DepartmentService } from '../../services/department.service';
+import { PositionService } from '../../services/position.service';
 
 interface Education {
   id: number;
@@ -36,9 +39,18 @@ interface Document {
   styleUrls: ['./hr-employee-form.css']
 })
 export class HrEmployeeFormComponent implements OnInit {
+  private router = inject(Router);
+  private route = inject(ActivatedRoute);
+  private employeeService = inject(EmployeeService);
+  private departmentService = inject(DepartmentService);
+  private positionService = inject(PositionService);
+
   isSidebarCollapsed = false;
   isEditMode = false;
   employeeId: string | null = null;
+  isLoading = false;
+  errorMessage = '';
+  successMessage = '';
 
   // Modal states
   showEducationModal = false;
@@ -55,10 +67,10 @@ export class HrEmployeeFormComponent implements OnInit {
     phone: '',
     address: '',
     joiningDate: '',
-    position: '',
-    department: '',
-    reportingManager: '',
-    employmentStatus: '',
+    position_id: null as number | null,
+    department_id: null as number | null,
+    reporting_manager_id: null as number | null,
+    employmentStatus: 'Active',
     salaryGrade: '',
     linkedUser: ''
   };
@@ -99,21 +111,18 @@ export class HrEmployeeFormComponent implements OnInit {
   };
   editingDocumentId: number | null = null;
 
-  // Dropdown options
+  // Dropdown options - loaded from API
   genderOptions = ['Male', 'Female', 'Other', 'Prefer not to say'];
-  positionOptions = ['Senior Manager', 'Developer', 'HR Specialist', 'QA Analyst', 'Account Manager', 'Designer', 'Sales Executive'];
-  departmentOptions = ['Sales', 'IT', 'HR', 'Operations', 'Finance'];
-  managerOptions = ['None', 'John Smith', 'Sarah Johnson', 'Anna Lee', 'Mike Brown', 'David Wilson'];
+  positions: any[] = [];
+  departments: any[] = [];
+  employees: any[] = []; // For reporting manager dropdown
   statusOptions = ['Active', 'On Leave', 'Terminated'];
   gradeOptions = ['Grade 1', 'Grade 2', 'Grade 3', 'Grade 4', 'Grade 5', 'Grade 6', 'Grade 7', 'Grade 8', 'Grade 9', 'Grade 10'];
   documentTypeOptions = ['Resume', 'ID Proof', 'Certificate', 'Other'];
 
-  constructor(
-    private router: Router,
-    private route: ActivatedRoute
-  ) {}
-
   ngOnInit() {
+    this.loadDropdowns();
+    
     this.route.paramMap.subscribe(params => {
       this.employeeId = params.get('id');
       this.isEditMode = !!this.employeeId;
@@ -121,46 +130,77 @@ export class HrEmployeeFormComponent implements OnInit {
       if (this.isEditMode) {
         this.loadEmployeeData(this.employeeId!);
       } else {
-        this.employeeForm.employeeId = 'EMP' + (Math.floor(Math.random() * 900) + 100).toString().padStart(3, '0');
+        // For new employees, don't pre-fill employeeId - backend will auto-generate
+        this.employeeForm.employeeId = ''; // Will show as empty/readonly
+      }
+    });
+  }
+
+  loadDropdowns() {
+    // Load departments
+    this.departmentService.getAllDepartments().subscribe({
+      next: (depts: any[]) => {
+        this.departments = depts;
+      },
+      error: (error) => {
+        console.error('Error loading departments:', error);
+      }
+    });
+
+    // Load positions
+    this.positionService.getAllPositions().subscribe({
+      next: (positions: any[]) => {
+        this.positions = positions;
+      },
+      error: (error) => {
+        console.error('Error loading positions:', error);
+      }
+    });
+
+    // Load employees for reporting manager dropdown
+    this.employeeService.getAllEmployees(true).subscribe({
+      next: (employees: any[]) => {
+        this.employees = employees;
+      },
+      error: (error) => {
+        console.error('Error loading employees:', error);
       }
     });
   }
 
   loadEmployeeData(id: string) {
-    // Mock data loading - in real app, this would be an API call
-    this.employeeForm = {
-      employeeId: id,
-      fullName: 'John Smith',
-      dateOfBirth: '1990-05-15',
-      gender: 'Male',
-      email: 'john.smith@company.com',
-      phone: '+1234567890',
-      address: '123 Main St, City, State 12345',
-      joiningDate: '2020-01-15',
-      position: 'Senior Manager',
-      department: 'Sales',
-      reportingManager: 'None',
-      employmentStatus: 'Active',
-      salaryGrade: 'Grade 5',
-      linkedUser: ''
-    };
-
-    // Mock education data
-    this.educationList = [
-      { id: 1, degree: 'MBA', institution: 'Harvard Business School', year: 2015, fieldOfStudy: 'Business Management' },
-      { id: 2, degree: 'Bachelor of Commerce', institution: 'University of California', year: 2010, fieldOfStudy: 'Commerce' }
-    ];
-
-    // Mock certification data
-    this.certificationList = [
-      { id: 1, name: 'PMP', issuingOrg: 'PMI', issueDate: '2020-03-15', expiryDate: '2023-03-15', certificationId: 'PMP-12345' }
-    ];
-
-    // Mock document data
-    this.documentList = [
-      { id: 1, type: 'Resume', fileName: 'john_smith_resume.pdf', uploadDate: '2020-01-10', description: 'Latest resume' },
-      { id: 2, type: 'ID Proof', fileName: 'drivers_license.pdf', uploadDate: '2020-01-10', description: 'Government ID' }
-    ];
+    this.isLoading = true;
+    this.errorMessage = '';
+    
+    // Convert string ID to number
+    const employeeIdNum = parseInt(id.replace('EMP', ''), 10);
+    
+    this.employeeService.getEmployeeById(employeeIdNum).subscribe({
+      next: (employee: any) => {
+        this.employeeForm = {
+          employeeId: employee.employee_id,
+          fullName: employee.full_name,
+          dateOfBirth: employee.date_of_birth || '',
+          gender: employee.gender || '',
+          email: employee.email,
+          phone: employee.phone || '',
+          address: employee.address || '',
+          joiningDate: employee.joining_date || '',
+          position_id: employee.position_id,
+          department_id: employee.department_id,
+          reporting_manager_id: employee.reporting_manager_id,
+          employmentStatus: employee.employment_status || 'Active',
+          salaryGrade: employee.salary_grade || '',
+          linkedUser: employee.user?.id || ''
+        };
+        this.isLoading = false;
+      },
+      error: (error) => {
+        console.error('Error loading employee:', error);
+        this.errorMessage = 'Failed to load employee data.';
+        this.isLoading = false;
+      }
+    });
   }
 
   toggleSidebar() {
@@ -365,15 +405,78 @@ export class HrEmployeeFormComponent implements OnInit {
 
   // Save employee
   saveEmployee() {
-    if (!this.employeeForm.fullName || !this.employeeForm.email || !this.employeeForm.joiningDate || 
-        !this.employeeForm.position || !this.employeeForm.department || !this.employeeForm.employmentStatus) {
-      alert('Please fill in all required fields');
+    if (!this.employeeForm.fullName || !this.employeeForm.email || !this.employeeForm.joiningDate) {
+      this.errorMessage = 'Full Name, Email, and Joining Date are required';
       return;
     }
 
-    // In real app, this would be an API call
-    alert('Employee saved successfully!');
-    this.router.navigate(['/hr-employees']);
+    this.isLoading = true;
+    this.errorMessage = '';
+    this.successMessage = '';
+
+    const payload: any = {
+      full_name: this.employeeForm.fullName,
+      email: this.employeeForm.email,
+      joining_date: this.employeeForm.joiningDate,
+      position_id: this.employeeForm.position_id || null,
+      department_id: this.employeeForm.department_id || null,
+      reporting_manager_id: this.employeeForm.reporting_manager_id || null,
+      employment_status: this.employeeForm.employmentStatus || 'Active',
+      is_active: this.employeeForm.employmentStatus === 'Active'
+    };
+    
+    // DO NOT send employee_id for new employees - let backend auto-generate
+    // Only send employee_id if editing and we want to keep the existing one
+
+    // Optional fields
+    if (this.employeeForm.dateOfBirth) {
+      payload.date_of_birth = this.employeeForm.dateOfBirth;
+    }
+    if (this.employeeForm.gender) {
+      payload.gender = this.employeeForm.gender;
+    }
+    if (this.employeeForm.phone) {
+      payload.phone = this.employeeForm.phone;
+    }
+    if (this.employeeForm.address) {
+      payload.address = this.employeeForm.address;
+    }
+    if (this.employeeForm.salaryGrade) {
+      payload.salary_grade = this.employeeForm.salaryGrade;
+    }
+
+    if (this.isEditMode && this.employeeId) {
+      // Update existing employee
+      const employeeIdNum = parseInt(this.employeeId.replace('EMP', ''), 10);
+      this.employeeService.updateEmployee(employeeIdNum, payload).subscribe({
+        next: () => {
+          this.successMessage = 'Employee updated successfully!';
+          setTimeout(() => {
+            this.router.navigate(['/hr-employees']);
+          }, 1000);
+        },
+        error: (error) => {
+          console.error('Error updating employee:', error);
+          this.errorMessage = error.error?.error || 'Failed to update employee. Please try again.';
+          this.isLoading = false;
+        }
+      });
+    } else {
+      // Create new employee
+      this.employeeService.createEmployee(payload).subscribe({
+        next: () => {
+          this.successMessage = 'Employee created successfully!';
+          setTimeout(() => {
+            this.router.navigate(['/hr-employees']);
+          }, 1000);
+        },
+        error: (error) => {
+          console.error('Error creating employee:', error);
+          this.errorMessage = error.error?.error || 'Failed to create employee. Please try again.';
+          this.isLoading = false;
+        }
+      });
+    }
   }
 
   cancel() {

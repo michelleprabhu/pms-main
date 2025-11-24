@@ -20,6 +20,7 @@ class Employee(AuditMixin, db.Model):
     position_id = db.Column(db.Integer, db.ForeignKey('positions.id'), nullable=True)
     department_id = db.Column(db.Integer, db.ForeignKey('departments.id'), nullable=True)
     reporting_manager_id = db.Column(db.Integer, db.ForeignKey('employees.id'), nullable=True)
+    org_id = db.Column(db.Integer, db.ForeignKey('organizations.id'), nullable=True)  # Nullable initially for backward compatibility
     employment_status = db.Column(db.String(20), nullable=False, default='Active')
     is_active = db.Column(db.Boolean, nullable=False, default=True)
     salary_grade = db.Column(db.String(20), nullable=True)
@@ -30,6 +31,7 @@ class Employee(AuditMixin, db.Model):
     department = db.relationship('Department', foreign_keys=[department_id], back_populates='employees', lazy=True)
     reporting_manager = db.relationship('Employee', remote_side=[id], backref='direct_reports', lazy=True)
     user = db.relationship('User', back_populates='employee', foreign_keys='User.employee_id', uselist=False, lazy=True)
+    organization = db.relationship('Organization', back_populates='employees', foreign_keys=[org_id], lazy=True)
     created_by_user = db.relationship('User', foreign_keys='Employee.created_by', remote_side='User.id', lazy=True)
     updated_by_user = db.relationship('User', foreign_keys='Employee.updated_by', remote_side='User.id', lazy=True)
 
@@ -39,7 +41,7 @@ class Employee(AuditMixin, db.Model):
     )
 
     def to_dict(self):
-        return {
+        result = {
             'id': self.id,
             'employee_id': self.employee_id,
             'external_id': self.external_id,
@@ -53,6 +55,7 @@ class Employee(AuditMixin, db.Model):
             'position_id': self.position_id,
             'department_id': self.department_id,
             'reporting_manager_id': self.reporting_manager_id,
+            'org_id': self.org_id,
             'employment_status': self.employment_status,
             'is_active': self.is_active,
             'salary_grade': self.salary_grade,
@@ -63,4 +66,29 @@ class Employee(AuditMixin, db.Model):
             'updated_at': self.updated_at.isoformat() if self.updated_at else None,
             'deleted_at': self.deleted_at.isoformat() if self.deleted_at else None
         }
+        
+        # Include nested position object if relationship is loaded
+        if self.position:
+            result['position'] = {
+                'id': self.position.id,
+                'title': self.position.title,
+                'grade_level': self.position.grade_level
+            }
+        
+        # Include nested department object if relationship is loaded
+        if self.department:
+            result['department'] = {
+                'id': self.department.id,
+                'name': self.department.name
+            }
+        
+        # Include nested reporting_manager object if relationship is loaded
+        if self.reporting_manager:
+            result['reporting_manager'] = {
+                'id': self.reporting_manager.id,
+                'employee_id': self.reporting_manager.employee_id,
+                'full_name': self.reporting_manager.full_name
+            }
+        
+        return result
 

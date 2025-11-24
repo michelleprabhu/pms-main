@@ -1,14 +1,17 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { DepartmentService } from '../../services/department.service';
+import { EmployeeService } from '../../services/employee.service';
+import { PermissionService } from '../../services/permission.service';
 
 interface Department {
   id: number;
   name: string;
-  head: string | null;
-  employeeCount: number;
-  description: string;
+  head_of_department_id?: number | null;
+  head_of_department?: { full_name: string } | null;
+  description: string | null;
 }
 
 @Component({
@@ -18,39 +21,61 @@ interface Department {
   templateUrl: './hr-departments.html',
   styleUrls: ['./hr-departments.css']
 })
-export class HrDepartmentsComponent {
+export class HrDepartmentsComponent implements OnInit {
+  private router = inject(Router);
+  private departmentService = inject(DepartmentService);
+  private employeeService = inject(EmployeeService);
+  public permissionService = inject(PermissionService);
+
   isSidebarCollapsed = false;
   showModal = false;
   isEditMode = false;
+  isLoading = false;
+  errorMessage = '';
   
-  departments: Department[] = [
-    { id: 1, name: 'Sales', head: 'John Smith', employeeCount: 25, description: 'Sales and business development' },
-    { id: 2, name: 'IT', head: 'Sarah Johnson', employeeCount: 15, description: 'Information technology and systems' },
-    { id: 3, name: 'HR', head: 'Anna Lee', employeeCount: 5, description: 'Human resources management' },
-    { id: 4, name: 'Operations', head: null, employeeCount: 30, description: 'Operations and logistics' },
-    { id: 5, name: 'Finance', head: 'Mike Brown', employeeCount: 8, description: 'Financial management and accounting' }
-  ];
-
-  // Mock employee list for dropdown
-  employees = [
-    'John Smith',
-    'Sarah Johnson',
-    'Anna Lee',
-    'Mike Brown',
-    'David Wilson',
-    'Emily Davis',
-    'Robert Taylor',
-    'Maria Garcia'
-  ];
+  departments: Department[] = [];
+  employees: any[] = [];
 
   departmentForm = {
     id: 0,
     name: '',
-    head: null as string | null,
+    head_of_department_id: null as number | null,
     description: ''
   };
 
-  constructor(private router: Router) {}
+  constructor() {}
+
+  ngOnInit() {
+    this.loadDepartments();
+    this.loadEmployees();
+  }
+
+  loadDepartments() {
+    this.isLoading = true;
+    this.errorMessage = '';
+    this.departmentService.getAllDepartments().subscribe({
+      next: (departments: Department[]) => {
+        this.departments = departments;
+        this.isLoading = false;
+      },
+      error: (error) => {
+        console.error('Error loading departments:', error);
+        this.errorMessage = 'Failed to load departments. Please try again.';
+        this.isLoading = false;
+      }
+    });
+  }
+
+  loadEmployees() {
+    this.employeeService.getAllEmployees(true).subscribe({
+      next: (employees: any[]) => {
+        this.employees = employees;
+      },
+      error: (error) => {
+        console.error('Error loading employees:', error);
+      }
+    });
+  }
 
   toggleSidebar() {
     this.isSidebarCollapsed = !this.isSidebarCollapsed;
@@ -86,10 +111,11 @@ export class HrDepartmentsComponent {
 
   openAddModal() {
     this.isEditMode = false;
+    this.errorMessage = '';
     this.departmentForm = {
       id: 0,
       name: '',
-      head: null,
+      head_of_department_id: null,
       description: ''
     };
     this.showModal = true;
@@ -97,60 +123,75 @@ export class HrDepartmentsComponent {
 
   openEditModal(department: Department) {
     this.isEditMode = true;
+    this.errorMessage = '';
     this.departmentForm = {
       id: department.id,
       name: department.name,
-      head: department.head,
-      description: department.description
+      head_of_department_id: department.head_of_department_id || null,
+      description: department.description || ''
     };
     this.showModal = true;
   }
 
   closeModal() {
     this.showModal = false;
+    this.errorMessage = '';
     this.departmentForm = {
       id: 0,
       name: '',
-      head: null,
+      head_of_department_id: null,
       description: ''
     };
   }
 
   saveDepartment() {
     if (!this.departmentForm.name.trim()) {
-      alert('Department name is required');
+      this.errorMessage = 'Department name is required';
       return;
     }
 
-    if (this.isEditMode) {
-      // Update existing department
-      const index = this.departments.findIndex(d => d.id === this.departmentForm.id);
-      if (index !== -1) {
-        this.departments[index] = {
-          ...this.departments[index],
-          name: this.departmentForm.name,
-          head: this.departmentForm.head,
-          description: this.departmentForm.description
-        };
-      }
-    } else {
-      // Add new department
-      const newDepartment: Department = {
-        id: Math.max(...this.departments.map(d => d.id)) + 1,
-        name: this.departmentForm.name,
-        head: this.departmentForm.head,
-        employeeCount: 0,
-        description: this.departmentForm.description
-      };
-      this.departments.push(newDepartment);
-    }
+    const payload: any = {
+      name: this.departmentForm.name.trim(),
+      description: this.departmentForm.description || null,
+      head_of_department_id: this.departmentForm.head_of_department_id || null
+    };
 
-    this.closeModal();
+    if (this.isEditMode) {
+      this.departmentService.updateDepartment(this.departmentForm.id, payload).subscribe({
+        next: () => {
+          this.loadDepartments();
+          this.closeModal();
+        },
+        error: (error) => {
+          console.error('Error updating department:', error);
+          this.errorMessage = error.error?.error || 'Failed to update department';
+        }
+      });
+    } else {
+      this.departmentService.createDepartment(payload).subscribe({
+        next: () => {
+          this.loadDepartments();
+          this.closeModal();
+        },
+        error: (error) => {
+          console.error('Error creating department:', error);
+          this.errorMessage = error.error?.error || 'Failed to create department';
+        }
+      });
+    }
   }
 
   deleteDepartment(id: number) {
     if (confirm('Are you sure you want to delete this department?')) {
-      this.departments = this.departments.filter(d => d.id !== id);
+      this.departmentService.deleteDepartment(id).subscribe({
+        next: () => {
+          this.loadDepartments();
+        },
+        error: (error) => {
+          console.error('Error deleting department:', error);
+          alert('Failed to delete department. Please try again.');
+        }
+      });
     }
   }
 

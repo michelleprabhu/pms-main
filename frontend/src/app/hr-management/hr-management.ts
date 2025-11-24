@@ -62,6 +62,10 @@ export class HrManagementComponent {
     this.router.navigate(['/hr-positions']);
   }
 
+  navigateToUsers() {
+    this.router.navigate(['/hr-users']);
+  }
+
   navigateToPermissions() {
     this.router.navigate(['/hr-permissions']);
   }

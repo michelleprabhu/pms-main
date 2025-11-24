@@ -27,7 +27,9 @@ export class PermissionGuard implements CanActivate {
     const hasPermission = this.permissionService.hasAnyPermission(permissions);
 
     if (!hasPermission) {
-      console.warn(`Access denied: User does not have required permissions: ${permissions.join(', ')}`);
+      const currentPermissions = this.permissionService.getUserPermissions();
+      console.warn(`[PermissionGuard] Access denied: User does not have required permissions: ${permissions.join(', ')}`);
+      console.warn(`[PermissionGuard] Current permissions (${currentPermissions.length}):`, currentPermissions);
       // Redirect to login or show error (you can customize this)
       this.router.navigate(['/login']);
       return false;

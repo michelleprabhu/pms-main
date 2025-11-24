@@ -104,14 +104,16 @@ def generate_token(user):
     # Get role_name for token (role relationship should already be loaded)
     role_name = user.role.role_name if user.role else None
     
-    # Token expiration: 8 hours as per knowledge transfer
-    expiration = datetime.utcnow() + timedelta(hours=8)
+    # Token expiration: 24 hours (increased from 8 hours to reduce permission errors)
+    expiration = datetime.utcnow() + timedelta(hours=24)
     
     payload = {
         'user_id': user.id,  # Use user_id as per knowledge transfer
         'username': user.username,
         'role_id': user.role_id,
         'role': role_name,  # Include role_name for frontend compatibility
+        'org_id': user.org_id,  # Include org_id for organization filtering
+        'employee_id': user.employee_id,  # Include employee_id for permission checks
         'exp': expiration,
         'iat': datetime.utcnow()
     }

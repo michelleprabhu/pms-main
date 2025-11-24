@@ -7,12 +7,12 @@ import { PermissionService } from './permission.service';
   providedIn: 'root'
 })
 export class AuthService {
-  private apiUrl = 'http://localhost:5002/api';
+  private apiUrl = 'http://localhost:5003/api';
 
   constructor(
     private http: HttpClient,
     private permissionService: PermissionService
-  ) {}
+  ) { }
 
   login(credentials: { email: string; password: string }): Observable<any> {
     return this.http.post(this.apiUrl + '/login', credentials);

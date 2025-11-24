@@ -45,6 +45,10 @@
           <span class="nav-icon"><i class="fas fa-calendar-alt"></i></span>
           <span class="nav-text" *ngIf="!isSidebarCollapsed">Review Periods</span>
         </div>
+        <div class="nav-item" *ngIf="permissionService.hasPermission('view_hr_management_page')" (click)="navigateToGoalsLibrary()">
+          <span class="nav-icon"><i class="fas fa-bullseye"></i></span>
+          <span class="nav-text" *ngIf="!isSidebarCollapsed">Goals Library</span>
+        </div>
       </div>
       
       <div class="nav-spacer"></div>

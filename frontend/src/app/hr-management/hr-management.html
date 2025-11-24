@@ -126,7 +126,24 @@
           </button>
         </div>
 
-        <!-- Card 4: Permission Management -->
+        <!-- Card 4: User Management -->
+        <div class="management-card">
+          <div class="card-icon-wrapper">
+            <div class="card-icon">
+              <i class="fas fa-user-cog"></i>
+            </div>
+          </div>
+          <h2 class="card-title">User Management</h2>
+          <p class="card-description">
+            Manage user accounts, assign roles, and link users to employees
+          </p>
+          <button class="card-button" (click)="navigateToUsers()">
+            <span>Manage Users</span>
+            <i class="fas fa-arrow-right"></i>
+          </button>
+        </div>
+
+        <!-- Card 5: Permission Management -->
         <div class="management-card" *ngIf="permissionService.hasPermission('manage_permissions')">
           <div class="card-icon-wrapper">
             <div class="card-icon">

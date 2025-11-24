@@ -127,25 +127,25 @@
               
               <div class="weightage-display-row">
                 <span class="weightage-display-label">Goals:</span>
-                <span class="weightage-display-percent">60%</span>
+                <span class="weightage-display-percent">{{ goalsWeightage }}%</span>
                 <div class="weightage-progress-container">
-                  <div class="weightage-progress-bar goals-bar" style="width: 60%"></div>
+                  <div class="weightage-progress-bar goals-bar" [style.width.%]="goalsWeightage"></div>
                 </div>
               </div>
 
               <div class="weightage-display-row">
                 <span class="weightage-display-label">Competencies:</span>
-                <span class="weightage-display-percent">25%</span>
+                <span class="weightage-display-percent">{{ competenciesWeightage }}%</span>
                 <div class="weightage-progress-container">
-                  <div class="weightage-progress-bar competencies-bar" style="width: 25%"></div>
+                  <div class="weightage-progress-bar competencies-bar" [style.width.%]="competenciesWeightage"></div>
                 </div>
               </div>
 
               <div class="weightage-display-row">
                 <span class="weightage-display-label">Values:</span>
-                <span class="weightage-display-percent">15%</span>
+                <span class="weightage-display-percent">{{ valuesWeightage }}%</span>
                 <div class="weightage-progress-container">
-                  <div class="weightage-progress-bar values-bar" style="width: 15%"></div>
+                  <div class="weightage-progress-bar values-bar" [style.width.%]="valuesWeightage"></div>
                 </div>
               </div>
             </div>
@@ -255,12 +255,25 @@
       <div class="modal-body">
         <form class="goal-form">
           <div class="form-group">
+            <label>Select from Library Goal</label>
+            <select class="form-control" [(ngModel)]="selectedLibraryGoal" (change)="onLibraryGoalSelected()" name="libraryGoal" [disabled]="isLoadingLibraryGoals">
+              <option value="">-- Select a pre-defined goal or create custom --</option>
+              <option *ngFor="let goal of libraryGoals" [value]="goal.id">{{ goal.goal_name || goal.name }}</option>
+            </select>
+            <small *ngIf="isLoadingLibraryGoals" style="color: #666;">Loading library goals...</small>
+          </div>
+          
+          <div class="form-divider" *ngIf="libraryGoals.length > 0">
+            <span>OR Create Custom Goal</span>
+          </div>
+
+          <div class="form-group">
             <label>Name <span class="required">*</span></label>
             <input type="text" class="form-control" placeholder="Enter goal name" [(ngModel)]="newGoal.name" name="name" />
           </div>
           
           <div class="form-group">
-            <label>Description <span class="required">*</span></label>
+            <label>Description</label>
             <textarea class="form-control" rows="3" placeholder="Enter goal description" [(ngModel)]="newGoal.description" name="description"></textarea>
           </div>
 

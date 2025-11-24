@@ -10,6 +10,7 @@ class Position(AuditMixin, db.Model):
     title = db.Column(db.String(100), nullable=False)
     external_id = db.Column(db.String(50), unique=True, nullable=True)
     department_id = db.Column(db.Integer, db.ForeignKey('departments.id'), nullable=True)
+    org_id = db.Column(db.Integer, db.ForeignKey('organizations.id'), nullable=True)  # Nullable initially for backward compatibility
     grade_level = db.Column(db.String(20), nullable=True)
     description = db.Column(db.Text, nullable=True)
     last_synced_at = db.Column(db.DateTime, nullable=True)
@@ -17,6 +18,7 @@ class Position(AuditMixin, db.Model):
     # Relationships
     department = db.relationship('Department', back_populates='positions', lazy=True)
     employees = db.relationship('Employee', back_populates='position', lazy=True)
+    organization = db.relationship('Organization', back_populates='positions', foreign_keys=[org_id], lazy=True)
     created_by_user = db.relationship('User', foreign_keys='Position.created_by', remote_side='User.id', lazy=True)
     updated_by_user = db.relationship('User', foreign_keys='Position.updated_by', remote_side='User.id', lazy=True)
 
@@ -26,6 +28,7 @@ class Position(AuditMixin, db.Model):
             'title': self.title,
             'external_id': self.external_id,
             'department_id': self.department_id,
+            'org_id': self.org_id,
             'grade_level': self.grade_level,
             'description': self.description,
             'last_synced_at': self.last_synced_at.isoformat() if self.last_synced_at else None,

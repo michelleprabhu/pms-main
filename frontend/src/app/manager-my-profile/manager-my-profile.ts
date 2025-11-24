@@ -1,7 +1,9 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { GoalsLibraryService } from '../../services/goals-library.service';
 
 interface ScoreCard {
   id: number;
@@ -24,12 +26,12 @@ export class ManagerMyProfileComponent implements OnInit {
   periodId: number = 0;
 
   // Manager info (showing manager as an employee)
-  employeeName: string = 'Michael Chen';
-  employeePosition: string = 'Engineering Manager';
-  employeeEmail: string = 'michael.chen@company.com';
-  employeeDepartment: string = 'Engineering';
-  employeeManager: string = 'VP Engineering';
-  employeeJoinDate: string = 'Mar 10, 2018';
+  employeeName: string = '';
+  employeePosition: string = '';
+  employeeEmail: string = '';
+  employeeDepartment: string = '';
+  employeeManager: string = '';
+  employeeJoinDate: string = '';
 
   // Weightage Distribution
   weightages = {
@@ -56,15 +58,11 @@ export class ManagerMyProfileComponent implements OnInit {
   // Add Goal Modal
   showAddGoalModal: boolean = false;
   selectedLibraryGoal: string = '';
-  libraryGoals = [
-    { id: '1', name: 'Improve Customer Satisfaction Score', description: 'Increase CSAT score by implementing feedback mechanisms and improving response times', weight: 20 },
-    { id: '2', name: 'Increase Revenue by Target Percentage', description: 'Achieve revenue growth targets through strategic initiatives and market expansion', weight: 25 },
-    { id: '3', name: 'Reduce Operational Costs', description: 'Optimize processes and reduce unnecessary expenses to improve operational efficiency', weight: 15 },
-    { id: '4', name: 'Enhance Team Productivity', description: 'Improve team output and efficiency through better tools, training, and collaboration', weight: 20 },
-    { id: '5', name: 'Complete Strategic Project Deliverables', description: 'Successfully deliver all assigned strategic project milestones on time and within budget', weight: 20 },
-    { id: '6', name: 'Complete Technical Certification', description: 'Obtain relevant technical certification to enhance skills and expertise in core technologies', weight: 15 },
-    { id: '7', name: 'Implement New Software Feature', description: 'Design, develop, and deploy a new software feature that enhances product capabilities', weight: 25 }
-  ];
+  libraryGoals: any[] = [];
+  isLoadingLibraryGoals = false;
+  private goalsLibraryService = inject(GoalsLibraryService);
+  private http = inject(HttpClient);
+  private apiUrl = 'http://localhost:5003/api';
   
   newGoal = {
     name: '',
@@ -83,6 +81,113 @@ export class ManagerMyProfileComponent implements OnInit {
   ngOnInit() {
     this.route.queryParams.subscribe(params => {
       this.periodId = +params['periodId'] || 1;
+    });
+    this.loadUserData();
+    this.loadScoreCards();
+  }
+
+  loadUserData() {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+
+    const headers = new HttpHeaders({
+      'Authorization': `Bearer ${token}`
+    });
+
+    this.http.get(`${this.apiUrl}/current-user/employee`, { headers }).subscribe({
+      next: (employee: any) => {
+        if (employee) {
+          this.employeeName = employee.full_name || '';
+          this.employeeEmail = employee.email || '';
+          this.employeePosition = employee.position?.title || 'N/A';
+          this.employeeDepartment = employee.department?.name || 'N/A';
+          this.employeeManager = employee.reporting_manager?.full_name || 'N/A';
+          this.employeeJoinDate = employee.joining_date ? new Date(employee.joining_date).toLocaleDateString() : 'N/A';
+        }
+      },
+      error: (err) => {
+        console.error('Failed to load employee data:', err);
+        // Fallback to current-user endpoint
+        this.http.get(`${this.apiUrl}/current-user`, { headers }).subscribe({
+          next: (user: any) => {
+            if (user.employee) {
+              this.employeeName = user.employee.full_name || user.username || '';
+              this.employeeEmail = user.employee.email || user.email || '';
+              this.employeePosition = user.employee.position?.title || 'N/A';
+              this.employeeDepartment = user.employee.department?.name || 'N/A';
+              this.employeeManager = user.employee.reporting_manager?.full_name || 'N/A';
+              this.employeeJoinDate = user.employee.joining_date ? new Date(user.employee.joining_date).toLocaleDateString() : 'N/A';
+            } else {
+              this.employeeName = user.username || '';
+              this.employeeEmail = user.email || '';
+            }
+          },
+          error: (err2) => {
+            console.error('Failed to load user data:', err2);
+          }
+        });
+      }
+    });
+  }
+
+  loadScoreCards() {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+
+    const headers = new HttpHeaders({
+      'Authorization': `Bearer ${token}`
+    });
+
+    // Get current user's employee_id first
+    this.http.get(`${this.apiUrl}/current-user`, { headers }).subscribe({
+      next: (user: any) => {
+        if (!user.employee_id) {
+          console.warn('User has no employee_id');
+          return;
+        }
+
+        // Get employee's score cards
+        this.http.get(`${this.apiUrl}/score-cards/employee/my-score-cards`, { headers }).subscribe({
+          next: (response: any) => {
+            const scoreCards = response.score_cards || [];
+            if (scoreCards.length > 0) {
+              // Find active score card
+              const active = scoreCards.find((sc: any) => sc.status === 'planning' || sc.status === 'in_progress');
+              if (active) {
+                this.activeScoreCard = {
+                  id: active.id,
+                  reviewPeriod: active.review_period?.period_name || 'N/A',
+                  status: active.status || 'Planning in Progress',
+                  startDate: active.review_period?.start_date ? new Date(active.review_period.start_date).toLocaleDateString() : '',
+                  endDate: active.review_period?.end_date ? new Date(active.review_period.end_date).toLocaleDateString() : ''
+                };
+                
+                // Load weightage
+                if (active.goals_weightage) this.weightages.goals = active.goals_weightage;
+                if (active.competencies_weightage) this.weightages.competencies = active.competencies_weightage;
+                if (active.values_weightage) this.weightages.values = active.values_weightage;
+              }
+              
+              // Past score cards
+              this.pastScoreCards = scoreCards
+                .filter((sc: any) => sc.status === 'completed' || sc.status === 'finalized')
+                .map((sc: any) => ({
+                  id: sc.id,
+                  reviewPeriod: sc.review_period?.period_name || 'N/A',
+                  status: 'Evaluation Complete',
+                  startDate: sc.review_period?.start_date ? new Date(sc.review_period.start_date).toLocaleDateString() : '',
+                  endDate: sc.review_period?.end_date ? new Date(sc.review_period.end_date).toLocaleDateString() : ''
+                }));
+            }
+          },
+          error: (err) => {
+            console.error('Failed to load score cards:', err);
+          }
+        });
+      },
+      error: (err) => {
+        console.error('Failed to load user:', err);
+      }
     });
   }
 
@@ -144,6 +249,25 @@ export class ManagerMyProfileComponent implements OnInit {
 
   openAddGoalModal() {
     this.showAddGoalModal = true;
+    this.loadLibraryGoals();
+  }
+
+  loadLibraryGoals() {
+    this.isLoadingLibraryGoals = true;
+    this.goalsLibraryService.getAllGoals().subscribe({
+      next: (goals: any) => {
+        console.log('Loaded library goals:', goals);
+        this.libraryGoals = Array.isArray(goals) ? goals : [];
+        console.log('Library goals count:', this.libraryGoals.length);
+        this.isLoadingLibraryGoals = false;
+      },
+      error: (err) => {
+        console.error('Failed to load library goals:', err);
+        console.error('Error details:', err.error);
+        this.libraryGoals = [];
+        this.isLoadingLibraryGoals = false;
+      }
+    });
   }
 
   closeAddGoalModal() {
@@ -168,12 +292,18 @@ export class ManagerMyProfileComponent implements OnInit {
 
   onLibraryGoalSelected() {
     if (this.selectedLibraryGoal) {
-      const goal = this.libraryGoals.find(g => g.id === this.selectedLibraryGoal);
+      const goal = this.libraryGoals.find(g => g.id === +this.selectedLibraryGoal);
       if (goal) {
-        this.newGoal.name = goal.name;
-        this.newGoal.description = goal.description;
-        this.newGoal.weight = goal.weight;
+        this.newGoal.name = goal.goal_name || goal.name;
+        this.newGoal.description = goal.description || '';
+        // Use suggested_weight if available, otherwise default to 0
+        this.newGoal.weight = goal.suggested_weight ? parseInt(goal.suggested_weight) : 0;
       }
+    } else {
+      // Clear form when no library goal is selected
+      this.newGoal.name = '';
+      this.newGoal.description = '';
+      this.newGoal.weight = 0;
     }
   }
 
@@ -185,15 +315,67 @@ export class ManagerMyProfileComponent implements OnInit {
 
   addGoal() {
     // Validation
-    if (!this.newGoal.name || !this.newGoal.description || !this.newGoal.status || 
-        !this.newGoal.weight || !this.newGoal.startDate || !this.newGoal.endDate) {
-      alert('Please fill in all required fields');
+    if (!this.newGoal.name || !this.newGoal.weight) {
+      alert('Please fill in goal name and weight');
       return;
     }
 
-    console.log('Adding goal:', this.newGoal);
-    alert('Goal added successfully!');
-    this.closeAddGoalModal();
+    if (!this.activeScoreCard || !this.activeScoreCard.id) {
+      alert('No active score card found');
+      return;
+    }
+
+    const token = localStorage.getItem('token');
+    if (!token) {
+      alert('Not authenticated');
+      return;
+    }
+
+    const headers = new HttpHeaders({
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    });
+
+    // Prepare payload
+    const payload: any = {
+      goal_name: this.newGoal.name,
+      description: this.newGoal.description || null,
+      weight: this.newGoal.weight
+    };
+
+    // If library goal is selected, include library_goal_id
+    if (this.selectedLibraryGoal) {
+      payload.library_goal_id = parseInt(this.selectedLibraryGoal);
+    }
+
+    // Add optional fields
+    if (this.newGoal.startDate) {
+      payload.start_date = this.newGoal.startDate;
+    }
+    if (this.newGoal.endDate) {
+      payload.end_date = this.newGoal.endDate;
+    }
+    if (this.newGoal.deadlineDate) {
+      payload.deadline_date = this.newGoal.deadlineDate;
+    }
+    if (this.newGoal.status) {
+      payload.status = this.newGoal.status;
+    }
+
+    // Call API
+    this.http.post(`${this.apiUrl}/score-cards/${this.activeScoreCard.id}/goals`, payload, { headers })
+      .subscribe({
+        next: (response: any) => {
+          alert('Goal added successfully!');
+          this.closeAddGoalModal();
+          // Reload goals list if needed
+          // You might want to emit an event or reload the score card data here
+        },
+        error: (err) => {
+          console.error('Error adding goal:', err);
+          alert(err.error?.error || 'Failed to add goal. Please try again.');
+        }
+      });
   }
 
   onWeightageChange(changedField: 'goals' | 'competencies' | 'values') {
